@@ -458,51 +458,49 @@
         const scale = parseInt(scaleSelect.value, 10);
         const faceEnhance = faceEnhanceSelect.value === 'true';
 
-        // Create prediction
-        const createRes = await fetch('https://api.replicate.com/v1/predictions', {
+        // Call our Netlify Function (avoids CORS problems with Replicate)
+        const createRes = await fetch('/.netlify/functions/enhance', {
           method: 'POST',
-          headers: {
-            'Authorization': `Token ${token}`,
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            // Real-ESRGAN model version (supports scale up to 10 and face enhancement)
-            version: 'b3ef194191d13140337468c916c2c5b96dd0cb06dffc032a022a31807f6a5ea8',
-            input: {
-              image: originalImageDataUrl,
-              scale: scale,
-              face_enhance: faceEnhance
-            }
+            token: token,
+            image: originalImageDataUrl,
+            scale: scale,
+            face_enhance: faceEnhance
           })
         });
 
+        const createData = await createRes.json();
+
         if (!createRes.ok) {
-          const err = await createRes.json().catch(() => ({}));
-          throw new Error(err.detail || `API error ${createRes.status}`);
+          throw new Error(createData.error || `API error ${createRes.status}`);
         }
 
-        const prediction = await createRes.json();
-        const predictionId = prediction.id;
-        let status = prediction.status;
-        let result = prediction;
+        const predictionId = createData.id;
+        let status = createData.status;
+        let result = createData;
 
-        // Poll until finished
+        // Poll until finished (also through our proxy)
         while (status !== 'succeeded' && status !== 'failed' && status !== 'canceled') {
           statusEl.innerHTML = `<span class="spinner"></span> Processing... (${status})`;
-          await new Promise(r => setTimeout(r, 1500));
+          await new Promise(r => setTimeout(r, 1800));
 
-          const pollRes = await fetch(`https://api.replicate.com/v1/predictions/${predictionId}`, {
-            headers: {
-              'Authorization': `Token ${token}`,
-              'Content-Type': 'application/json'
-            }
+          const pollRes = await fetch('/.netlify/functions/status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              token: token,
+              predictionId: predictionId
+            })
           });
 
+          const pollData = await pollRes.json();
+
           if (!pollRes.ok) {
-            throw new Error(`Polling failed: ${pollRes.status}`);
+            throw new Error(pollData.error || `Polling failed: ${pollRes.status}`);
           }
 
-          result = await pollRes.json();
+          result = pollData;
           status = result.status;
         }
 
