@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Image Clearer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background: #0f0f13;
+      color: #e4e4e7;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    .hero {
+      text-align: center;
+      max-width: 680px;
+      margin-bottom: 48px;
+    }
+
+    h1 {
+      font-size: 2.4rem;
+      margin-bottom: 12px;
+      background: linear-gradient(90deg, #a78bfa, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      color: #a1a1aa;
+      font-size: 1.1rem;
+      line-height: 1.5;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      width: 100%;
+      max-width: 800px;
+    }
+
+    @media (max-width: 700px) {
+      .cards {
+        grid-template-columns: 1fr;
+      }
+      h1 {
+        font-size: 1.9rem;
+      }
+    }
+
+    .card {
+      background: #18181b;
+      border: 1px solid #27272a;
+      border-radius: 16px;
+      padding: 28px 24px;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.25s;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .card:hover {
+      border-color: #a78bfa;
+      background: #1f1f23;
+      transform: translateY(-3px);
+    }
+
+    .card h2 {
+      font-size: 1.25rem;
+      color: #f4f4f5;
+    }
+
+    .card p {
+      color: #a1a1aa;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      flex: 1;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-weight: 600;
+      width: fit-content;
+    }
+
+    .badge-ai {
+      background: rgba(139, 92, 246, 0.2);
+      color: #c4b5fd;
+    }
+
+    .badge-local {
+      background: rgba(34, 197, 94, 0.15);
+      color: #86efac;
+    }
+
+    .card-footer {
+      margin-top: 8px;
+      font-size: 0.9rem;
+      color: #a78bfa;
+      font-weight: 500;
+    }
+
+    footer {
+      margin-top: 50px;
+      color: #52525b;
+      font-size: 0.85rem;
+      text-align: center;
+    }
+
+    footer a {
+      color: #a1a1aa;
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      color: #e4e4e7;
+    }
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <h1>AI Image Clearer</h1>
+    <p class="subtitle">
+      Turn blurry photos into clear, sharp images.<br>
+      Choose the real AI version or the fully offline local enhancer.
+    </p>
+  </div>
+
+  <div class="cards">
+    <a href="ai-image-clearer.html" class="card">
+      <span class="badge badge-ai">Recommended</span>
+      <h2>AI Enhancer (Real-ESRGAN)</h2>
+      <p>
+        Strong deblurring and 2x / 4x upscaling powered by Real-ESRGAN + GFPGAN via Replicate.
+        Best quality. Requires a free API token.
+      </p>
+      <div class="card-footer">Open AI version →</div>
+    </a>
+
+    <a href="local-image-enhancer.html" class="card">
+      <span class="badge badge-local">Offline</span>
+      <h2>Local Enhancer</h2>
+      <p>
+        Canvas-based sharpening, contrast boost and mild denoising.
+        Works completely offline. No API key or internet required.
+      </p>
+      <div class="card-footer">Open local version →</div>
+    </a>
+  </div>
+
+  <footer>
+    <p>
+      <a href="https://github.com/Moswettta/ai-image-clearer" target="_blank" rel="noopener">View on GitHub</a>
+    </p>
+  </footer>
+</body>
+</html>
