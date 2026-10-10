@@ -3,233 +3,68 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Free Image Clearer - Offline Upscaler</title>
+  <title>Free Image Clearer - Offline</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Segoe UI', system-ui, sans-serif;
-    }
-
-    body {
-      background: #0f0f13;
-      color: #e4e4e7;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 30px 20px;
-    }
-
-    h1 {
-      font-size: 1.9rem;
-      margin-bottom: 8px;
-      background: linear-gradient(90deg, #34d399, #60a5fa);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .subtitle {
-      color: #a1a1aa;
-      margin-bottom: 28px;
-      text-align: center;
-      font-size: 0.95rem;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 1100px;
-      display: flex;
-      flex-direction: column;
-      gap: 22px;
-    }
-
-    .upload-box {
-      border: 2px dashed #3f3f46;
-      border-radius: 14px;
-      padding: 45px 20px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.25s;
-      background: #18181b;
-    }
-
-    .upload-box:hover, .upload-box.dragover {
-      border-color: #34d399;
-      background: #1f1f23;
-    }
-
-    .upload-box p {
-      color: #a1a1aa;
-      margin-top: 10px;
-    }
-
-    #fileInput {
-      display: none;
-    }
-
-    .controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      justify-content: center;
-      align-items: center;
-    }
-
-    button {
-      background: #27272a;
-      color: white;
-      border: none;
-      padding: 11px 20px;
-      border-radius: 9px;
-      font-size: 14px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    button:hover:not(:disabled) {
-      background: #3f3f46;
-    }
-
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    button.primary {
-      background: linear-gradient(90deg, #10b981, #3b82f6);
-    }
-
-    button.primary:hover:not(:disabled) {
-      background: linear-gradient(90deg, #059669, #2563eb);
-    }
-
-    select {
-      background: #27272a;
-      color: white;
-      border: 1px solid #3f3f46;
-      padding: 10px 14px;
-      border-radius: 9px;
-      font-size: 14px;
-      cursor: pointer;
-    }
-
-    .preview-area {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 18px;
-    }
-
-    @media (max-width: 768px) {
-      .preview-area {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .preview-card {
-      background: #18181b;
-      border-radius: 14px;
-      overflow: hidden;
-      border: 1px solid #27272a;
-    }
-
-    .preview-header {
-      padding: 11px 16px;
-      background: #27272a;
-      font-weight: 600;
-      font-size: 13px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .preview-body {
-      padding: 14px;
-      min-height: 260px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #0f0f13;
-    }
-
-    .preview-body img, .preview-body canvas {
-      max-width: 100%;
-      max-height: 480px;
-      border-radius: 8px;
-      box-shadow: 0 4px 18px rgba(0,0,0,0.4);
-    }
-
-    .placeholder {
-      color: #52525b;
-      font-size: 14px;
-    }
-
-    .status {
-      text-align: center;
-      color: #a1a1aa;
-      font-size: 14px;
-      min-height: 22px;
-    }
-
-    .spinner {
-      display: inline-block;
-      width: 16px;
-      height: 16px;
-      border: 2px solid #34d399;
-      border-top-color: transparent;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin-right: 7px;
-      vertical-align: middle;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    .note {
-      text-align: center;
-      color: #71717a;
-      font-size: 13px;
-      max-width: 620px;
-      margin: 0 auto;
-      line-height: 1.5;
-    }
-
-    .info {
-      font-size: 12px;
-      color: #a1a1aa;
-      text-align: center;
-    }
+    *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif}
+    body{background:#0f0f13;color:#e4e4e7;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:30px 20px}
+    h1{font-size:1.9rem;margin-bottom:8px;background:linear-gradient(90deg,#34d399,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .subtitle{color:#a1a1aa;margin-bottom:28px;text-align:center;font-size:.95rem}
+    .container{width:100%;max-width:1100px;display:flex;flex-direction:column;gap:22px}
+    .upload-box{border:2px dashed #3f3f46;border-radius:14px;padding:45px 20px;text-align:center;cursor:pointer;transition:all .25s;background:#18181b}
+    .upload-box:hover,.upload-box.dragover{border-color:#34d399;background:#1f1f23}
+    .upload-box p{color:#a1a1aa;margin-top:10px}
+    #fileInput{display:none}
+    .controls{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center}
+    button{background:#27272a;color:#fff;border:none;padding:11px 20px;border-radius:9px;font-size:14px;cursor:pointer;transition:all .2s}
+    button:hover:not(:disabled){background:#3f3f46}
+    button:disabled{opacity:.5;cursor:not-allowed}
+    button.primary{background:linear-gradient(90deg,#10b981,#3b82f6)}
+    button.primary:hover:not(:disabled){background:linear-gradient(90deg,#059669,#2563eb)}
+    select{background:#27272a;color:#fff;border:1px solid #3f3f46;padding:10px 14px;border-radius:9px;font-size:14px;cursor:pointer}
+    .preview-area{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    @media(max-width:768px){.preview-area{grid-template-columns:1fr}}
+    .preview-card{background:#18181b;border-radius:14px;overflow:hidden;border:1px solid #27272a}
+    .preview-header{padding:11px 16px;background:#27272a;font-weight:600;font-size:13px;display:flex;justify-content:space-between;align-items:center}
+    .preview-body{padding:14px;min-height:260px;display:flex;align-items:center;justify-content:center;background:#0f0f13}
+    .preview-body canvas{max-width:100%;max-height:480px;border-radius:8px;box-shadow:0 4px 18px rgba(0,0,0,.4)}
+    .placeholder{color:#52525b;font-size:14px}
+    .status{text-align:center;color:#a1a1aa;font-size:14px;min-height:22px}
+    .spinner{display:inline-block;width:16px;height:16px;border:2px solid #34d399;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;margin-right:7px;vertical-align:middle}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .note{text-align:center;color:#71717a;font-size:13px;max-width:640px;margin:0 auto;line-height:1.5}
+    .info{font-size:12px;color:#a1a1aa}
   </style>
 </head>
 <body>
   <h1>Free Image Clearer</h1>
-  <p class="subtitle">100% free and offline. Upscale 720p → 1440p / 2080p / 4K style results</p>
+  <p class="subtitle">100% free & offline · Cleaner colors · Better edges · X-Ray detail mode</p>
 
   <div class="container">
     <div class="upload-box" id="uploadBox">
-      <div style="font-size: 38px; opacity: 0.7;">IMG</div>
+      <div style="font-size:38px;opacity:.7">IMG</div>
       <p><strong>Click or drag and drop</strong> your blurry image here</p>
-      <p style="font-size: 13px; margin-top: 5px;">Works fully offline – no API needed</p>
+      <p style="font-size:13px;margin-top:5px">Works fully offline – no API needed</p>
       <input type="file" id="fileInput" accept="image/*">
     </div>
 
     <div class="controls">
       <select id="scale">
-        <option value="1">1x (same size, just clearer)</option>
+        <option value="1">1x (same size)</option>
         <option value="2" selected>2x (720p → ~1440p)</option>
-        <option value="3">3x (720p → ~2160p / 2080p range)</option>
-        <option value="4">4x (720p → ~2880p / high-res)</option>
+        <option value="3">3x (720p → ~2160p)</option>
+        <option value="4">4x (high-res)</option>
+      </select>
+
+      <select id="mode">
+        <option value="natural" selected>Natural (recommended)</option>
+        <option value="xray">X-Ray Detail</option>
+        <option value="soft">Soft / Clean</option>
       </select>
 
       <select id="strength">
         <option value="1">Light</option>
         <option value="2" selected>Medium</option>
         <option value="3">Strong</option>
-        <option value="4">Maximum</option>
       </select>
 
       <button class="primary" id="enhanceBtn" disabled>Enhance & Upscale</button>
@@ -239,8 +74,10 @@
 
     <div class="status" id="status"></div>
     <p class="note">
-      Choose 2x or 3x for most photos. 3x on a 720p image produces roughly 2160p output.
-      This is a free offline upscaler (canvas-based). It improves clarity and resolution but cannot invent the same level of detail as paid AI models.
+      <b>Natural</b> = balanced colors and edges.<br>
+      <b>X-Ray Detail</b> = stronger fine detail and edge recovery.<br>
+      <b>Soft</b> = cleaner, less aggressive look.<br>
+      This is still a free offline tool – it improves clarity but cannot match paid AI quality.
     </p>
 
     <div class="preview-area">
@@ -272,6 +109,7 @@
     const downloadBtn = document.getElementById('downloadBtn');
     const resetBtn = document.getElementById('resetBtn');
     const scaleSelect = document.getElementById('scale');
+    const modeSelect = document.getElementById('mode');
     const strengthSelect = document.getElementById('strength');
     const status = document.getElementById('status');
     const originalPreview = document.getElementById('originalPreview');
@@ -283,29 +121,19 @@
     let enhancedCanvas = null;
 
     uploadBox.addEventListener('click', () => fileInput.click());
-    uploadBox.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      uploadBox.classList.add('dragover');
-    });
-    uploadBox.addEventListener('dragleave', () => {
-      uploadBox.classList.remove('dragover');
-    });
-    uploadBox.addEventListener('drop', (e) => {
+    uploadBox.addEventListener('dragover', e => { e.preventDefault(); uploadBox.classList.add('dragover'); });
+    uploadBox.addEventListener('dragleave', () => uploadBox.classList.remove('dragover'));
+    uploadBox.addEventListener('drop', e => {
       e.preventDefault();
       uploadBox.classList.remove('dragover');
       if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
     });
-    fileInput.addEventListener('change', (e) => {
-      if (e.target.files.length) handleFile(e.target.files[0]);
-    });
+    fileInput.addEventListener('change', e => { if (e.target.files.length) handleFile(e.target.files[0]); });
 
     function handleFile(file) {
-      if (!file.type.startsWith('image/')) {
-        alert('Please upload an image file');
-        return;
-      }
+      if (!file.type.startsWith('image/')) { alert('Please upload an image file'); return; }
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = e => {
         const img = new Image();
         img.onload = () => {
           originalImage = img;
@@ -327,9 +155,9 @@
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       const maxW = 520;
-      const scale = Math.min(1, maxW / img.width);
-      canvas.width = img.width * scale;
-      canvas.height = img.height * scale;
+      const s = Math.min(1, maxW / img.width);
+      canvas.width = img.width * s;
+      canvas.height = img.height * s;
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       originalPreview.appendChild(canvas);
       originalSizeEl.textContent = img.width + ' × ' + img.height;
@@ -338,18 +166,19 @@
     enhanceBtn.addEventListener('click', () => {
       if (!originalImage) return;
       enhanceBtn.disabled = true;
-      status.innerHTML = '<span class="spinner"></span> Upscaling and enhancing... please wait';
+      status.innerHTML = '<span class="spinner"></span> Processing... please wait';
 
       setTimeout(() => {
         try {
           const scale = parseInt(scaleSelect.value);
+          const mode = modeSelect.value;
           const strength = parseInt(strengthSelect.value);
-          enhancedCanvas = enhanceImage(originalImage, scale, strength);
+          enhancedCanvas = enhanceImage(originalImage, scale, mode, strength);
           enhancedPreview.innerHTML = '';
           enhancedPreview.appendChild(enhancedCanvas);
           enhancedSizeEl.textContent = enhancedCanvas.width + ' × ' + enhancedCanvas.height;
           downloadBtn.disabled = false;
-          status.textContent = 'Done! Output size: ' + enhancedCanvas.width + ' × ' + enhancedCanvas.height;
+          status.textContent = 'Done! Output: ' + enhancedCanvas.width + ' × ' + enhancedCanvas.height;
         } catch (err) {
           console.error(err);
           status.textContent = 'Error: ' + err.message;
@@ -359,113 +188,122 @@
       }, 40);
     });
 
-    function enhanceImage(img, scaleFactor, strength) {
+    function enhanceImage(img, scaleFactor, mode, strength) {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
 
-      const targetW = Math.round(img.width * scaleFactor);
-      const targetH = Math.round(img.height * scaleFactor);
+      let finalW = Math.round(img.width * scaleFactor);
+      let finalH = Math.round(img.height * scaleFactor);
 
-      // Limit extreme sizes to avoid browser crash
-      const maxDim = 5000;
-      let finalW = targetW;
-      let finalH = targetH;
+      // Safety limit
+      const maxDim = 4800;
       if (finalW > maxDim || finalH > maxDim) {
-        const ratio = Math.min(maxDim / finalW, maxDim / finalH);
-        finalW = Math.round(finalW * ratio);
-        finalH = Math.round(finalH * ratio);
+        const r = Math.min(maxDim / finalW, maxDim / finalH);
+        finalW = Math.round(finalW * r);
+        finalH = Math.round(finalH * r);
       }
 
       canvas.width = finalW;
       canvas.height = finalH;
-
-      // High quality upscale
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
       ctx.drawImage(img, 0, 0, finalW, finalH);
 
-      let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      let imageData = ctx.getImageData(0, 0, finalW, finalH);
       let data = imageData.data;
 
-      // Denoise (stronger when upscaling a lot)
+      // 1. Gentle denoise first
       if (strength >= 2 || scaleFactor >= 2) {
-        data = simpleDenoise(data, canvas.width, canvas.height, strength >= 3 || scaleFactor >= 3);
+        data = gentleDenoise(data, finalW, finalH);
       }
 
-      // Contrast + brightness
-      const contrast = 1 + (0.16 * strength);
-      const brightness = 3 * strength;
-      applyContrastBrightness(data, contrast, brightness);
+      // 2. Natural color correction (prevent washed-out look)
+      naturalColor(data, mode, strength);
 
-      // Main unsharp mask
-      const amount = 0.6 + (0.4 * strength) + (0.15 * (scaleFactor - 1));
-      const radius = scaleFactor >= 3 ? 1.8 : (scaleFactor >= 2 ? 1.4 : 1);
-      unsharpMask(data, canvas.width, canvas.height, amount, radius);
-
-      // Extra micro-contrast
-      if (strength >= 2) {
-        applyMicroContrast(data, 1.12 + (strength * 0.04));
+      // 3. Edge-aware sharpening
+      if (mode === 'xray') {
+        // Stronger detail recovery
+        unsharpMask(data, finalW, finalH, 0.75 + strength * 0.25, 1.2 + strength * 0.2);
+        unsharpMask(data, finalW, finalH, 0.45, 0.7);
+        microContrast(data, 1.18 + strength * 0.06);
+      } else if (mode === 'soft') {
+        // Very gentle
+        unsharpMask(data, finalW, finalH, 0.35 + strength * 0.12, 1.0);
+      } else {
+        // Natural balanced
+        unsharpMask(data, finalW, finalH, 0.5 + strength * 0.18, 1.1);
+        if (strength >= 2) {
+          unsharpMask(data, finalW, finalH, 0.28, 0.8);
+        }
       }
 
-      // Second sharpen pass for higher scales
-      if (scaleFactor >= 2 || strength >= 3) {
-        unsharpMask(data, canvas.width, canvas.height, 0.4 + (0.12 * strength), 0.9);
+      // 4. Final light contrast only if needed
+      if (mode !== 'soft') {
+        gentleContrast(data, 1.04 + strength * 0.03);
       }
 
-      ctx.putImageData(new ImageData(data, canvas.width, canvas.height), 0, 0);
+      ctx.putImageData(new ImageData(data, finalW, finalH), 0, 0);
       return canvas;
     }
 
-    function applyContrastBrightness(data, contrast, brightness) {
-      const factor = (259 * (contrast * 255 + 255)) / (255 * (259 - contrast * 255));
+    // Better color: avoid over-bright / washed look
+    function naturalColor(data, mode, strength) {
+      const vibrance = mode === 'xray' ? 1.08 : 1.04;
+      const brightness = mode === 'soft' ? 2 : (mode === 'xray' ? 6 : 4);
+
       for (let i = 0; i < data.length; i += 4) {
-        data[i]     = clamp(factor * (data[i] - 128) + 128 + brightness);
-        data[i + 1] = clamp(factor * (data[i + 1] - 128) + 128 + brightness);
-        data[i + 2] = clamp(factor * (data[i + 2] - 128) + 128 + brightness);
+        let r = data[i], g = data[i+1], b = data[i+2];
+
+        // Mild brightness
+        r = Math.min(255, r + brightness);
+        g = Math.min(255, g + brightness);
+        b = Math.min(255, b + brightness);
+
+        // Simple vibrance (boost low-saturation colors a bit)
+        const avg = (r + g + b) / 3;
+        r = clamp(avg + (r - avg) * vibrance);
+        g = clamp(avg + (g - avg) * vibrance);
+        b = clamp(avg + (b - avg) * vibrance);
+
+        data[i] = r;
+        data[i+1] = g;
+        data[i+2] = b;
       }
     }
 
-    function applyMicroContrast(data, amount) {
+    function gentleContrast(data, amount) {
       for (let i = 0; i < data.length; i += 4) {
-        data[i]     = clamp((data[i] - 128) * amount + 128);
-        data[i + 1] = clamp((data[i + 1] - 128) * amount + 128);
-        data[i + 2] = clamp((data[i + 2] - 128) * amount + 128);
+        data[i]   = clamp((data[i] - 128) * amount + 128);
+        data[i+1] = clamp((data[i+1] - 128) * amount + 128);
+        data[i+2] = clamp((data[i+2] - 128) * amount + 128);
       }
     }
 
-    function simpleDenoise(data, width, height, extraPass) {
+    function microContrast(data, amount) {
+      for (let i = 0; i < data.length; i += 4) {
+        data[i]   = clamp((data[i] - 128) * amount + 128);
+        data[i+1] = clamp((data[i+1] - 128) * amount + 128);
+        data[i+2] = clamp((data[i+2] - 128) * amount + 128);
+      }
+    }
+
+    function gentleDenoise(data, width, height) {
       const copy = new Uint8ClampedArray(data);
-      const radius = 1;
-
-      for (let y = radius; y < height - radius; y++) {
-        for (let x = radius; x < width - radius; x++) {
+      const r = 1;
+      for (let y = r; y < height - r; y++) {
+        for (let x = r; x < width - r; x++) {
           for (let c = 0; c < 3; c++) {
-            let sum = 0;
-            let count = 0;
-            for (let dy = -radius; dy <= radius; dy++) {
-              for (let dx = -radius; dx <= radius; dx++) {
+            let sum = 0, count = 0;
+            for (let dy = -r; dy <= r; dy++) {
+              for (let dx = -r; dx <= r; dx++) {
                 sum += copy[((y + dy) * width + (x + dx)) * 4 + c];
                 count++;
               }
             }
-            data[(y * width + x) * 4 + c] = sum / count;
-          }
-        }
-      }
-
-      if (extraPass) {
-        const copy2 = new Uint8ClampedArray(data);
-        for (let y = 1; y < height - 1; y++) {
-          for (let x = 1; x < width - 1; x++) {
-            for (let c = 0; c < 3; c++) {
-              let sum = 0;
-              for (let dy = -1; dy <= 1; dy++) {
-                for (let dx = -1; dx <= 1; dx++) {
-                  sum += copy2[((y + dy) * width + (x + dx)) * 4 + c];
-                }
-              }
-              data[(y * width + x) * 4 + c] = (data[(y * width + x) * 4 + c] * 0.65) + (sum / 9 * 0.35);
-            }
+            // Blend original + average (keeps more detail)
+            const avg = sum / count;
+            const orig = data[(y * width + x) * 4 + c];
+            data[(y * width + x) * 4 + c] = orig * 0.55 + avg * 0.45;
           }
         }
       }
@@ -476,9 +314,9 @@
       const blurred = new Uint8ClampedArray(data.length);
       for (let i = 0; i < data.length; i++) blurred[i] = data[i];
 
-      const r = Math.max(1, Math.round(radius));
-      boxBlur(blurred, width, height, r);
-      boxBlur(blurred, width, height, r);
+      const rad = Math.max(1, Math.round(radius));
+      boxBlur(blurred, width, height, rad);
+      boxBlur(blurred, width, height, rad);
 
       for (let i = 0; i < data.length; i += 4) {
         for (let c = 0; c < 3; c++) {
@@ -491,7 +329,6 @@
 
     function boxBlur(data, width, height, radius) {
       const temp = new Uint8ClampedArray(data.length);
-
       for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
           for (let c = 0; c < 3; c++) {
@@ -507,7 +344,6 @@
           }
         }
       }
-
       for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
           for (let c = 0; c < 3; c++) {
