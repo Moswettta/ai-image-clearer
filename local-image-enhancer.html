@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Local Image Enhancer - Offline</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+
+    body {
+      background: #0f0f13;
+      color: #e4e4e7;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 20px;
+    }
+
+    h1 {
+      font-size: 1.9rem;
+      margin-bottom: 8px;
+      background: linear-gradient(90deg, #a78bfa, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      color: #a1a1aa;
+      margin-bottom: 28px;
+      text-align: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1100px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    .upload-box {
+      border: 2px dashed #3f3f46;
+      border-radius: 14px;
+      padding: 45px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s;
+      background: #18181b;
+    }
+
+    .upload-box:hover, .upload-box.dragover {
+      border-color: #a78bfa;
+      background: #1f1f23;
+    }
+
+    .upload-box p {
+      color: #a1a1aa;
+      margin-top: 10px;
+    }
+
+    #fileInput {
+      display: none;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    button {
+      background: #27272a;
+      color: white;
+      border: none;
+      padding: 11px 20px;
+      border-radius: 9px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    button:hover:not(:disabled) {
+      background: #3f3f46;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    button.primary {
+      background: linear-gradient(90deg, #8b5cf6, #6366f1);
+    }
+
+    button.primary:hover:not(:disabled) {
+      background: linear-gradient(90deg, #7c3aed, #4f46e5);
+    }
+
+    select {
+      background: #27272a;
+      color: white;
+      border: 1px solid #3f3f46;
+      padding: 10px 14px;
+      border-radius: 9px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .preview-area {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    @media (max-width: 768px) {
+      .preview-area {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .preview-card {
+      background: #18181b;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid #27272a;
+    }
+
+    .preview-header {
+      padding: 11px 16px;
+      background: #27272a;
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .preview-body {
+      padding: 14px;
+      min-height: 260px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0f0f13;
+    }
+
+    .preview-body img, .preview-body canvas {
+      max-width: 100%;
+      max-height: 420px;
+      border-radius: 8px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+    }
+
+    .placeholder {
+      color: #52525b;
+      font-size: 14px;
+    }
+
+    .status {
+      text-align: center;
+      color: #a1a1aa;
+      font-size: 14px;
+      min-height: 22px;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #a78bfa;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 7px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <h1>Local Image Enhancer</h1>
+  <p class="subtitle">Offline canvas-based sharpening and contrast enhancement (no API needed)</p>
+
+  <div class="container">
+    <div class="upload-box" id="uploadBox">
+      <div style="font-size: 38px; opacity: 0.7;">IMG</div>
+      <p><strong>Click or drag and drop</strong> your blurry image here</p>
+      <p style="font-size: 13px; margin-top: 5px;">Works fully offline</p>
+      <input type="file" id="fileInput" accept="image/*">
+    </div>
+
+    <div class="controls">
+      <select id="strength">
+        <option value="1">Light Enhancement</option>
+        <option value="2" selected>Medium Enhancement</option>
+        <option value="3">Strong Enhancement</option>
+      </select>
+      <button class="primary" id="enhanceBtn" disabled>Enhance Image</button>
+      <button id="downloadBtn" disabled>Download Clear Image</button>
+      <button id="resetBtn" disabled>Reset</button>
+    </div>
+
+    <div class="status" id="status"></div>
+
+    <div class="preview-area">
+      <div class="preview-card">
+        <div class="preview-header">Original (Blurry)</div>
+        <div class="preview-body" id="originalPreview">
+          <div class="placeholder">No image yet</div>
+        </div>
+      </div>
+      <div class="preview-card">
+        <div class="preview-header">Enhanced</div>
+        <div class="preview-body" id="enhancedPreview">
+          <div class="placeholder">Result will appear here</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const uploadBox = document.getElementById('uploadBox');
+    const fileInput = document.getElementById('fileInput');
+    const enhanceBtn = document.getElementById('enhanceBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const strengthSelect = document.getElementById('strength');
+    const status = document.getElementById('status');
+    const originalPreview = document.getElementById('originalPreview');
+    const enhancedPreview = document.getElementById('enhancedPreview');
+
+    let originalImage = null;
+    let enhancedCanvas = null;
+
+    uploadBox.addEventListener('click', () => fileInput.click());
+    uploadBox.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadBox.classList.add('dragover');
+    });
+    uploadBox.addEventListener('dragleave', () => {
+      uploadBox.classList.remove('dragover');
+    });
+    uploadBox.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadBox.classList.remove('dragover');
+      if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length) handleFile(e.target.files[0]);
+    });
+
+    function handleFile(file) {
+      if (!file.type.startsWith('image/')) {
+        alert('Please upload an image file');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          originalImage = img;
+          showOriginal(img);
+          enhanceBtn.disabled = false;
+          resetBtn.disabled = false;
+          downloadBtn.disabled = true;
+          enhancedPreview.innerHTML = '<div class="placeholder">Click "Enhance Image"</div>';
+          status.textContent = 'Image loaded. Ready to enhance.';
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function showOriginal(img) {
+      originalPreview.innerHTML = '';
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const maxW = 500;
+      const scale = Math.min(1, maxW / img.width);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      originalPreview.appendChild(canvas);
+    }
+
+    enhanceBtn.addEventListener('click', () => {
+      if (!originalImage) return;
+      enhanceBtn.disabled = true;
+      status.innerHTML = '<span class="spinner"></span> Enhancing image...';
+      setTimeout(() => {
+        const strength = parseInt(strengthSelect.value);
+        enhancedCanvas = enhanceImage(originalImage, strength);
+        enhancedPreview.innerHTML = '';
+        enhancedPreview.appendChild(enhancedCanvas);
+        downloadBtn.disabled = false;
+        enhanceBtn.disabled = false;
+        status.textContent = 'Enhancement complete.';
+      }, 40);
+    });
+
+    function enhanceImage(img, strength) {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+
+      if (strength >= 2) simpleDenoise(data, canvas.width, canvas.height);
+
+      const contrast = 1 + (0.15 * strength);
+      const brightness = 5 * strength;
+      applyContrastBrightness(data, contrast, brightness);
+
+      const amount = 0.6 + (0.35 * strength);
+      unsharpMask(data, canvas.width, canvas.height, amount, 1);
+
+      if (strength === 3) applyMicroContrast(data, 1.12);
+
+      ctx.putImageData(imageData, 0, 0);
+      return canvas;
+    }
+
+    function applyContrastBrightness(data, contrast, brightness) {
+      const factor = (259 * (contrast * 255 + 255)) / (255 * (259 - contrast * 255));
+      for (let i = 0; i < data.length; i += 4) {
+        data[i]     = clamp(factor * (data[i] - 128) + 128 + brightness);
+        data[i + 1] = clamp(factor * (data[i + 1] - 128) + 128 + brightness);
+        data[i + 2] = clamp(factor * (data[i + 2] - 128) + 128 + brightness);
+      }
+    }
+
+    function applyMicroContrast(data, amount) {
+      for (let i = 0; i < data.length; i += 4) {
+        data[i]     = clamp((data[i] - 128) * amount + 128);
+        data[i + 1] = clamp((data[i + 1] - 128) * amount + 128);
+        data[i + 2] = clamp((data[i + 2] - 128) * amount + 128);
+      }
+    }
+
+    function simpleDenoise(data, width, height) {
+      const copy = new Uint8ClampedArray(data);
+      for (let y = 1; y < height - 1; y++) {
+        for (let x = 1; x < width - 1; x++) {
+          for (let c = 0; c < 3; c++) {
+            let sum = 0;
+            for (let dy = -1; dy <= 1; dy++) {
+              for (let dx = -1; dx <= 1; dx++) {
+                sum += copy[((y + dy) * width + (x + dx)) * 4 + c];
+              }
+            }
+            data[(y * width + x) * 4 + c] = sum / 9;
+          }
+        }
+      }
+    }
+
+    function unsharpMask(data, width, height, amount, radius) {
+      const blurred = new Uint8ClampedArray(data.length);
+      for (let i = 0; i < data.length; i++) blurred[i] = data[i];
+      boxBlur(blurred, width, height, radius);
+      for (let i = 0; i < data.length; i += 4) {
+        for (let c = 0; c < 3; c++) {
+          const orig = data[i + c];
+          const blur = blurred[i + c];
+          data[i + c] = clamp(orig + amount * (orig - blur));
+        }
+      }
+    }
+
+    function boxBlur(data, width, height, radius) {
+      const temp = new Uint8ClampedArray(data.length);
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          for (let c = 0; c < 3; c++) {
+            let sum = 0, count = 0;
+            for (let dx = -radius; dx <= radius; dx++) {
+              const nx = x + dx;
+              if (nx >= 0 && nx < width) {
+                sum += data[(y * width + nx) * 4 + c];
+                count++;
+              }
+            }
+            temp[(y * width + x) * 4 + c] = sum / count;
+          }
+        }
+      }
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          for (let c = 0; c < 3; c++) {
+            let sum = 0, count = 0;
+            for (let dy = -radius; dy <= radius; dy++) {
+              const ny = y + dy;
+              if (ny >= 0 && ny < height) {
+                sum += temp[(ny * width + x) * 4 + c];
+                count++;
+              }
+            }
+            data[(y * width + x) * 4 + c] = sum / count;
+          }
+        }
+      }
+    }
+
+    function clamp(v) {
+      return Math.max(0, Math.min(255, Math.round(v)));
+    }
+
+    downloadBtn.addEventListener('click', () => {
+      if (!enhancedCanvas) return;
+      const link = document.createElement('a');
+      link.download = 'enhanced-clear-image.png';
+      link.href = enhancedCanvas.toDataURL('image/png');
+      link.click();
+    });
+
+    resetBtn.addEventListener('click', () => {
+      originalImage = null;
+      enhancedCanvas = null;
+      originalPreview.innerHTML = '<div class="placeholder">No image yet</div>';
+      enhancedPreview.innerHTML = '<div class="placeholder">Result will appear here</div>';
+      enhanceBtn.disabled = true;
+      downloadBtn.disabled = true;
+      resetBtn.disabled = true;
+      status.textContent = '';
+      fileInput.value = '';
+    });
+  </script>
+</body>
+</html>

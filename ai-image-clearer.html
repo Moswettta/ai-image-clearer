@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Image Clearer - Real-ESRGAN Deblur & Upscale</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background: #0f0f13;
+      color: #e4e4e7;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 20px;
+    }
+
+    h1 {
+      font-size: 1.9rem;
+      margin-bottom: 6px;
+      background: linear-gradient(90deg, #a78bfa, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      color: #a1a1aa;
+      margin-bottom: 28px;
+      text-align: center;
+      font-size: 0.95rem;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1100px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    .card {
+      background: #18181b;
+      border: 1px solid #27272a;
+      border-radius: 14px;
+      padding: 20px;
+    }
+
+    .card h2 {
+      font-size: 1rem;
+      margin-bottom: 14px;
+      color: #d4d4d8;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      color: #a1a1aa;
+      margin-bottom: 6px;
+    }
+
+    input[type="text"], input[type="password"], select {
+      width: 100%;
+      background: #27272a;
+      border: 1px solid #3f3f46;
+      color: #e4e4e7;
+      padding: 11px 14px;
+      border-radius: 9px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    input[type="text"]:focus, input[type="password"]:focus, select:focus {
+      border-color: #a78bfa;
+    }
+
+    .api-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    .api-row > div {
+      flex: 1;
+    }
+
+    button {
+      background: #27272a;
+      color: white;
+      border: none;
+      padding: 11px 18px;
+      border-radius: 9px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    button:hover:not(:disabled) {
+      background: #3f3f46;
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    button.primary {
+      background: linear-gradient(90deg, #8b5cf6, #6366f1);
+    }
+
+    button.primary:hover:not(:disabled) {
+      background: linear-gradient(90deg, #7c3aed, #4f46e5);
+    }
+
+    .upload-box {
+      border: 2px dashed #3f3f46;
+      border-radius: 14px;
+      padding: 45px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s;
+      background: #18181b;
+    }
+
+    .upload-box:hover, .upload-box.dragover {
+      border-color: #a78bfa;
+      background: #1f1f23;
+    }
+
+    .upload-box p {
+      color: #a1a1aa;
+      margin-top: 10px;
+      font-size: 0.95rem;
+    }
+
+    #fileInput {
+      display: none;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .preview-area {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    @media (max-width: 780px) {
+      .preview-area {
+        grid-template-columns: 1fr;
+      }
+      .api-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+
+    .preview-card {
+      background: #18181b;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid #27272a;
+    }
+
+    .preview-header {
+      padding: 11px 16px;
+      background: #27272a;
+      font-weight: 600;
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .preview-body {
+      padding: 14px;
+      min-height: 260px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0f0f13;
+    }
+
+    .preview-body img {
+      max-width: 100%;
+      max-height: 420px;
+      border-radius: 8px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.45);
+    }
+
+    .placeholder {
+      color: #52525b;
+      font-size: 14px;
+    }
+
+    .status {
+      text-align: center;
+      color: #a1a1aa;
+      font-size: 14px;
+      min-height: 22px;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #a78bfa;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+      margin-right: 7px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .note {
+      font-size: 12px;
+      color: #71717a;
+      margin-top: 8px;
+      line-height: 1.45;
+    }
+
+    a {
+      color: #a78bfa;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .options-row {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .option-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .option-group label {
+      margin-bottom: 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>AI Image Clearer</h1>
+  <p class="subtitle">Real AI deblurring and upscaling powered by Real-ESRGAN (via Replicate)</p>
+
+  <div class="container">
+    <!-- API Token -->
+    <div class="card">
+      <h2>1. Replicate API Token</h2>
+      <div class="api-row">
+        <div>
+          <label for="apiToken">Your Replicate API Token</label>
+          <input type="password" id="apiToken" placeholder="r8_xxxxxxxxxxxxxxxxxxxxxxxx">
+        </div>
+        <button id="saveTokenBtn">Save Token</button>
+      </div>
+      <p class="note">
+        Get a free token at <a href="https://replicate.com/account/api-tokens" target="_blank" rel="noopener">replicate.com/account/api-tokens</a>.
+        The free tier is enough for personal use. Token is stored only in your browser (localStorage).
+      </p>
+    </div>
+
+    <!-- Upload -->
+    <div class="upload-box" id="uploadBox">
+      <div style="font-size: 38px; opacity: 0.7;">IMG</div>
+      <p><strong>Click or drag and drop</strong> your blurry image here</p>
+      <p style="font-size: 13px; margin-top: 5px;">JPG, PNG, WEBP supported</p>
+      <input type="file" id="fileInput" accept="image/*">
+    </div>
+
+    <!-- Options + Controls -->
+    <div class="card">
+      <h2>2. Enhancement Options</h2>
+      <div class="options-row">
+        <div class="option-group">
+          <label for="scale">Upscale Factor</label>
+          <select id="scale">
+            <option value="2">2x</option>
+            <option value="4" selected>4x (recommended)</option>
+          </select>
+        </div>
+        <div class="option-group">
+          <label for="faceEnhance">Face Enhancement (GFPGAN)</label>
+          <select id="faceEnhance">
+            <option value="true" selected>On (better for portraits)</option>
+            <option value="false">Off</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="controls" style="margin-top: 18px;">
+        <button class="primary" id="enhanceBtn" disabled>Enhance with AI</button>
+        <button id="downloadBtn" disabled>Download Result</button>
+        <button id="resetBtn" disabled>Reset</button>
+      </div>
+    </div>
+
+    <div class="status" id="status"></div>
+
+    <!-- Previews -->
+    <div class="preview-area">
+      <div class="preview-card">
+        <div class="preview-header">
+          <span>Original</span>
+        </div>
+        <div class="preview-body" id="originalPreview">
+          <div class="placeholder">No image uploaded</div>
+        </div>
+      </div>
+
+      <div class="preview-card">
+        <div class="preview-header">
+          <span>AI Enhanced</span>
+        </div>
+        <div class="preview-body" id="enhancedPreview">
+          <div class="placeholder">Result will appear here</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const uploadBox = document.getElementById('uploadBox');
+    const fileInput = document.getElementById('fileInput');
+    const enhanceBtn = document.getElementById('enhanceBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const saveTokenBtn = document.getElementById('saveTokenBtn');
+    const apiTokenInput = document.getElementById('apiToken');
+    const scaleSelect = document.getElementById('scale');
+    const faceEnhanceSelect = document.getElementById('faceEnhance');
+    const statusEl = document.getElementById('status');
+    const originalPreview = document.getElementById('originalPreview');
+    const enhancedPreview = document.getElementById('enhancedPreview');
+
+    let originalImageDataUrl = null;
+    let enhancedImageUrl = null;
+    let isProcessing = false;
+
+    // Load saved token
+    const savedToken = localStorage.getItem('replicate_api_token');
+    if (savedToken) {
+      apiTokenInput.value = savedToken;
+    }
+
+    saveTokenBtn.addEventListener('click', () => {
+      const token = apiTokenInput.value.trim();
+      if (token) {
+        localStorage.setItem('replicate_api_token', token);
+        statusEl.textContent = 'Token saved in browser.';
+      } else {
+        localStorage.removeItem('replicate_api_token');
+        statusEl.textContent = 'Token cleared.';
+      }
+    });
+
+    // Upload handlers
+    uploadBox.addEventListener('click', () => fileInput.click());
+    uploadBox.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadBox.classList.add('dragover');
+    });
+    uploadBox.addEventListener('dragleave', () => {
+      uploadBox.classList.remove('dragover');
+    });
+    uploadBox.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadBox.classList.remove('dragover');
+      if (e.dataTransfer.files.length) {
+        handleFile(e.dataTransfer.files[0]);
+      }
+    });
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length) handleFile(e.target.files[0]);
+    });
+
+    function handleFile(file) {
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file.');
+        return;
+      }
+
+      // Limit size roughly (Replicate has limits)
+      if (file.size > 8 * 1024 * 1024) {
+        alert('Image is too large. Please use an image under 8 MB.');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        originalImageDataUrl = e.target.result;
+        showOriginal(originalImageDataUrl);
+        enhanceBtn.disabled = false;
+        resetBtn.disabled = false;
+        downloadBtn.disabled = true;
+        enhancedPreview.innerHTML = '<div class="placeholder">Click "Enhance with AI"</div>';
+        enhancedImageUrl = null;
+        statusEl.textContent = 'Image loaded. Ready to enhance.';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function showOriginal(dataUrl) {
+      originalPreview.innerHTML = '';
+      const img = document.createElement('img');
+      img.src = dataUrl;
+      img.alt = 'Original';
+      originalPreview.appendChild(img);
+    }
+
+    enhanceBtn.addEventListener('click', async () => {
+      if (!originalImageDataUrl || isProcessing) return;
+
+      const token = apiTokenInput.value.trim() || localStorage.getItem('replicate_api_token');
+      if (!token) {
+        alert('Please enter and save your Replicate API token first.');
+        return;
+      }
+
+      isProcessing = true;
+      enhanceBtn.disabled = true;
+      statusEl.innerHTML = '<span class="spinner"></span> Starting AI enhancement... this may take 10-40 seconds';
+
+      try {
+        const scale = parseInt(scaleSelect.value, 10);
+        const faceEnhance = faceEnhanceSelect.value === 'true';
+
+        // Create prediction
+        const createRes = await fetch('https://api.replicate.com/v1/predictions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Token ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            // Using a well-known Real-ESRGAN version that includes face enhancement option
+            version: '42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b',
+            input: {
+              image: originalImageDataUrl,
+              scale: scale,
+              face_enhance: faceEnhance
+            }
+          })
+        });
+
+        if (!createRes.ok) {
+          const err = await createRes.json().catch(() => ({}));
+          throw new Error(err.detail || `API error ${createRes.status}`);
+        }
+
+        const prediction = await createRes.json();
+        const predictionId = prediction.id;
+        let status = prediction.status;
+        let result = prediction;
+
+        // Poll until finished
+        while (status !== 'succeeded' && status !== 'failed' && status !== 'canceled') {
+          statusEl.innerHTML = `<span class="spinner"></span> Processing... (${status})`;
+          await new Promise(r => setTimeout(r, 1500));
+
+          const pollRes = await fetch(`https://api.replicate.com/v1/predictions/${predictionId}`, {
+            headers: {
+              'Authorization': `Token ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (!pollRes.ok) {
+            throw new Error(`Polling failed: ${pollRes.status}`);
+          }
+
+          result = await pollRes.json();
+          status = result.status;
+        }
+
+        if (status === 'failed') {
+          throw new Error(result.error || 'Enhancement failed on the server');
+        }
+
+        if (status === 'canceled') {
+          throw new Error('Prediction was canceled');
+        }
+
+        // Output is usually a string URL
+        const outputUrl = Array.isArray(result.output) ? result.output[0] : result.output;
+        if (!outputUrl) {
+          throw new Error('No output image returned');
+        }
+
+        enhancedImageUrl = outputUrl;
+        enhancedPreview.innerHTML = '';
+        const img = document.createElement('img');
+        img.src = outputUrl;
+        img.alt = 'Enhanced';
+        enhancedPreview.appendChild(img);
+
+        downloadBtn.disabled = false;
+        statusEl.textContent = 'Enhancement complete.';
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = 'Error: ' + (err.message || 'Something went wrong');
+        alert('Error: ' + (err.message || 'Something went wrong. Check your token and try again.'));
+      } finally {
+        isProcessing = false;
+        enhanceBtn.disabled = false;
+      }
+    });
+
+    downloadBtn.addEventListener('click', () => {
+      if (!enhancedImageUrl) return;
+      const link = document.createElement('a');
+      link.href = enhancedImageUrl;
+      link.download = 'ai-enhanced-clear-image.png';
+      link.target = '_blank';
+      link.click();
+    });
+
+    resetBtn.addEventListener('click', () => {
+      originalImageDataUrl = null;
+      enhancedImageUrl = null;
+      originalPreview.innerHTML = '<div class="placeholder">No image uploaded</div>';
+      enhancedPreview.innerHTML = '<div class="placeholder">Result will appear here</div>';
+      enhanceBtn.disabled = true;
+      downloadBtn.disabled = true;
+      resetBtn.disabled = true;
+      statusEl.textContent = '';
+      fileInput.value = '';
+    });
+  </script>
+</body>
+</html>
