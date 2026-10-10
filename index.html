@@ -101,14 +101,14 @@
       width: fit-content;
     }
 
+    .badge-free {
+      background: rgba(34, 197, 94, 0.2);
+      color: #86efac;
+    }
+
     .badge-ai {
       background: rgba(139, 92, 246, 0.2);
       color: #c4b5fd;
-    }
-
-    .badge-local {
-      background: rgba(34, 197, 94, 0.15);
-      color: #86efac;
     }
 
     .card-footer {
@@ -139,30 +139,32 @@
   <div class="hero">
     <h1>AI Image Clearer</h1>
     <p class="subtitle">
-      Turn blurry photos into clear, sharp images.<br>
-      Choose the real AI version or the fully offline local enhancer.
+      Turn blurry photos into clearer images.<br>
+      Choose the free offline tool or the paid high-quality AI version.
     </p>
   </div>
 
   <div class="cards">
-    <a href="ai-image-clearer.html" class="card">
-      <span class="badge badge-ai">Recommended</span>
-      <h2>AI Enhancer (Real-ESRGAN)</h2>
+    <a href="local-image-enhancer.html" class="card">
+      <span class="badge badge-free">100% Free</span>
+      <h2>Free Offline Enhancer</h2>
       <p>
-        Strong deblurring and 2x / 4x upscaling powered by Real-ESRGAN + GFPGAN via Replicate.
-        Best quality. Requires a free API token.
+        Advanced sharpening, contrast and detail recovery.
+        Works completely offline. No API key, no credits, no limits.
+        Recommended for most users.
       </p>
-      <div class="card-footer">Open AI version →</div>
+      <div class="card-footer">Open free version →</div>
     </a>
 
-    <a href="local-image-enhancer.html" class="card">
-      <span class="badge badge-local">Offline</span>
-      <h2>Local Enhancer</h2>
+    <a href="ai-image-clearer.html" class="card">
+      <span class="badge badge-ai">Paid (Replicate)</span>
+      <h2>AI Enhancer (Real-ESRGAN)</h2>
       <p>
-        Canvas-based sharpening, contrast boost and mild denoising.
-        Works completely offline. No API key or internet required.
+        Strongest deblurring and upscaling (up to 8x).
+        Requires a Replicate account with credit.
+        Best possible quality.
       </p>
-      <div class="card-footer">Open local version →</div>
+      <div class="card-footer">Open AI version →</div>
     </a>
   </div>
 

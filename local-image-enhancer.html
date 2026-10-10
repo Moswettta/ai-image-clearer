@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Local Image Enhancer - Offline</title>
+  <title>Free Image Clearer - Offline</title>
   <style>
     * {
       margin: 0;
@@ -25,7 +25,7 @@
     h1 {
       font-size: 1.9rem;
       margin-bottom: 8px;
-      background: linear-gradient(90deg, #a78bfa, #60a5fa);
+      background: linear-gradient(90deg, #34d399, #60a5fa);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -35,6 +35,7 @@
       color: #a1a1aa;
       margin-bottom: 28px;
       text-align: center;
+      font-size: 0.95rem;
     }
 
     .container {
@@ -56,7 +57,7 @@
     }
 
     .upload-box:hover, .upload-box.dragover {
-      border-color: #a78bfa;
+      border-color: #34d399;
       background: #1f1f23;
     }
 
@@ -98,11 +99,11 @@
     }
 
     button.primary {
-      background: linear-gradient(90deg, #8b5cf6, #6366f1);
+      background: linear-gradient(90deg, #10b981, #3b82f6);
     }
 
     button.primary:hover:not(:disabled) {
-      background: linear-gradient(90deg, #7c3aed, #4f46e5);
+      background: linear-gradient(90deg, #059669, #2563eb);
     }
 
     select {
@@ -152,7 +153,7 @@
 
     .preview-body img, .preview-body canvas {
       max-width: 100%;
-      max-height: 420px;
+      max-height: 480px;
       border-radius: 8px;
       box-shadow: 0 4px 18px rgba(0,0,0,0.4);
     }
@@ -173,7 +174,7 @@
       display: inline-block;
       width: 16px;
       height: 16px;
-      border: 2px solid #a78bfa;
+      border: 2px solid #34d399;
       border-top-color: transparent;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
@@ -184,11 +185,20 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+
+    .note {
+      text-align: center;
+      color: #71717a;
+      font-size: 13px;
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
   </style>
 </head>
 <body>
-  <h1>Local Image Enhancer</h1>
-  <p class="subtitle">Offline canvas-based sharpening and contrast enhancement (no API needed)</p>
+  <h1>Free Image Clearer</h1>
+  <p class="subtitle">100% free and offline. No API key. No credits. No limits.</p>
 
   <div class="container">
     <div class="upload-box" id="uploadBox">
@@ -200,9 +210,10 @@
 
     <div class="controls">
       <select id="strength">
-        <option value="1">Light Enhancement</option>
-        <option value="2" selected>Medium Enhancement</option>
-        <option value="3">Strong Enhancement</option>
+        <option value="1">Light</option>
+        <option value="2" selected>Medium (recommended)</option>
+        <option value="3">Strong</option>
+        <option value="4">Maximum</option>
       </select>
       <button class="primary" id="enhanceBtn" disabled>Enhance Image</button>
       <button id="downloadBtn" disabled>Download Clear Image</button>
@@ -210,10 +221,11 @@
     </div>
 
     <div class="status" id="status"></div>
+    <p class="note">This free version uses advanced sharpening, contrast and detail recovery. Results are good for most photos. For the absolute best quality you still need the paid Real-ESRGAN option.</p>
 
     <div class="preview-area">
       <div class="preview-card">
-        <div class="preview-header">Original (Blurry)</div>
+        <div class="preview-header">Original</div>
         <div class="preview-body" id="originalPreview">
           <div class="placeholder">No image yet</div>
         </div>
@@ -284,7 +296,7 @@
       originalPreview.innerHTML = '';
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      const maxW = 500;
+      const maxW = 520;
       const scale = Math.min(1, maxW / img.width);
       canvas.width = img.width * scale;
       canvas.height = img.height * scale;
@@ -295,39 +307,68 @@
     enhanceBtn.addEventListener('click', () => {
       if (!originalImage) return;
       enhanceBtn.disabled = true;
-      status.innerHTML = '<span class="spinner"></span> Enhancing image...';
+      status.innerHTML = '<span class="spinner"></span> Enhancing image... please wait';
+
       setTimeout(() => {
-        const strength = parseInt(strengthSelect.value);
-        enhancedCanvas = enhanceImage(originalImage, strength);
-        enhancedPreview.innerHTML = '';
-        enhancedPreview.appendChild(enhancedCanvas);
-        downloadBtn.disabled = false;
-        enhanceBtn.disabled = false;
-        status.textContent = 'Enhancement complete.';
-      }, 40);
+        try {
+          const strength = parseInt(strengthSelect.value);
+          enhancedCanvas = enhanceImage(originalImage, strength);
+          enhancedPreview.innerHTML = '';
+          enhancedPreview.appendChild(enhancedCanvas);
+          downloadBtn.disabled = false;
+          status.textContent = 'Enhancement complete.';
+        } catch (err) {
+          console.error(err);
+          status.textContent = 'Error: ' + err.message;
+        } finally {
+          enhanceBtn.disabled = false;
+        }
+      }, 50);
     });
 
     function enhanceImage(img, strength) {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.drawImage(img, 0, 0);
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imageData.data;
 
-      if (strength >= 2) simpleDenoise(data, canvas.width, canvas.height);
+      let targetW = img.width;
+      let targetH = img.height;
 
-      const contrast = 1 + (0.15 * strength);
-      const brightness = 5 * strength;
+      if (strength >= 3 && (img.width < 900 || img.height < 900)) {
+        const factor = strength === 4 ? 1.8 : 1.4;
+        targetW = Math.round(img.width * factor);
+        targetH = Math.round(img.height * factor);
+      }
+
+      canvas.width = targetW;
+      canvas.height = targetH;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(img, 0, 0, targetW, targetH);
+
+      let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      let data = imageData.data;
+
+      if (strength >= 2) {
+        data = simpleDenoise(data, canvas.width, canvas.height, strength >= 3 ? 1 : 0);
+      }
+
+      const contrast = 1 + (0.18 * strength);
+      const brightness = 4 * strength;
       applyContrastBrightness(data, contrast, brightness);
 
-      const amount = 0.6 + (0.35 * strength);
-      unsharpMask(data, canvas.width, canvas.height, amount, 1);
+      const amount = 0.55 + (0.45 * strength);
+      const radius = strength >= 3 ? 1.5 : 1;
+      unsharpMask(data, canvas.width, canvas.height, amount, radius);
 
-      if (strength === 3) applyMicroContrast(data, 1.12);
+      if (strength >= 3) {
+        applyMicroContrast(data, 1.15 + (strength * 0.05));
+      }
 
-      ctx.putImageData(imageData, 0, 0);
+      if (strength >= 2) {
+        unsharpMask(data, canvas.width, canvas.height, 0.35 + (0.15 * strength), 0.8);
+      }
+
+      ctx.putImageData(new ImageData(data, canvas.width, canvas.height), 0, 0);
       return canvas;
     }
 
@@ -348,27 +389,52 @@
       }
     }
 
-    function simpleDenoise(data, width, height) {
+    function simpleDenoise(data, width, height, extraPass) {
       const copy = new Uint8ClampedArray(data);
-      for (let y = 1; y < height - 1; y++) {
-        for (let x = 1; x < width - 1; x++) {
+      const radius = 1;
+
+      for (let y = radius; y < height - radius; y++) {
+        for (let x = radius; x < width - radius; x++) {
           for (let c = 0; c < 3; c++) {
             let sum = 0;
-            for (let dy = -1; dy <= 1; dy++) {
-              for (let dx = -1; dx <= 1; dx++) {
+            let count = 0;
+            for (let dy = -radius; dy <= radius; dy++) {
+              for (let dx = -radius; dx <= radius; dx++) {
                 sum += copy[((y + dy) * width + (x + dx)) * 4 + c];
+                count++;
               }
             }
-            data[(y * width + x) * 4 + c] = sum / 9;
+            data[(y * width + x) * 4 + c] = sum / count;
           }
         }
       }
+
+      if (extraPass) {
+        const copy2 = new Uint8ClampedArray(data);
+        for (let y = 1; y < height - 1; y++) {
+          for (let x = 1; x < width - 1; x++) {
+            for (let c = 0; c < 3; c++) {
+              let sum = 0;
+              for (let dy = -1; dy <= 1; dy++) {
+                for (let dx = -1; dx <= 1; dx++) {
+                  sum += copy2[((y + dy) * width + (x + dx)) * 4 + c];
+                }
+              }
+              data[(y * width + x) * 4 + c] = (data[(y * width + x) * 4 + c] * 0.6) + (sum / 9 * 0.4);
+            }
+          }
+        }
+      }
+      return data;
     }
 
     function unsharpMask(data, width, height, amount, radius) {
       const blurred = new Uint8ClampedArray(data.length);
       for (let i = 0; i < data.length; i++) blurred[i] = data[i];
-      boxBlur(blurred, width, height, radius);
+
+      boxBlur(blurred, width, height, Math.max(1, Math.round(radius)));
+      boxBlur(blurred, width, height, Math.max(1, Math.round(radius)));
+
       for (let i = 0; i < data.length; i += 4) {
         for (let c = 0; c < 3; c++) {
           const orig = data[i + c];
@@ -380,6 +446,7 @@
 
     function boxBlur(data, width, height, radius) {
       const temp = new Uint8ClampedArray(data.length);
+
       for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
           for (let c = 0; c < 3; c++) {
@@ -395,6 +462,7 @@
           }
         }
       }
+
       for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
           for (let c = 0; c < 3; c++) {
