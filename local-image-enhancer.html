@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Free Image Clearer - Offline</title>
+  <title>Free Image Clearer - Offline Upscaler</title>
   <style>
     * {
       margin: 0;
@@ -140,6 +140,9 @@
       background: #27272a;
       font-weight: 600;
       font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
     .preview-body {
@@ -190,48 +193,71 @@
       text-align: center;
       color: #71717a;
       font-size: 13px;
-      max-width: 600px;
+      max-width: 620px;
       margin: 0 auto;
       line-height: 1.5;
+    }
+
+    .info {
+      font-size: 12px;
+      color: #a1a1aa;
+      text-align: center;
     }
   </style>
 </head>
 <body>
   <h1>Free Image Clearer</h1>
-  <p class="subtitle">100% free and offline. No API key. No credits. No limits.</p>
+  <p class="subtitle">100% free and offline. Upscale 720p → 1440p / 2080p / 4K style results</p>
 
   <div class="container">
     <div class="upload-box" id="uploadBox">
       <div style="font-size: 38px; opacity: 0.7;">IMG</div>
       <p><strong>Click or drag and drop</strong> your blurry image here</p>
-      <p style="font-size: 13px; margin-top: 5px;">Works fully offline</p>
+      <p style="font-size: 13px; margin-top: 5px;">Works fully offline – no API needed</p>
       <input type="file" id="fileInput" accept="image/*">
     </div>
 
     <div class="controls">
+      <select id="scale">
+        <option value="1">1x (same size, just clearer)</option>
+        <option value="2" selected>2x (720p → ~1440p)</option>
+        <option value="3">3x (720p → ~2160p / 2080p range)</option>
+        <option value="4">4x (720p → ~2880p / high-res)</option>
+      </select>
+
       <select id="strength">
         <option value="1">Light</option>
-        <option value="2" selected>Medium (recommended)</option>
+        <option value="2" selected>Medium</option>
         <option value="3">Strong</option>
         <option value="4">Maximum</option>
       </select>
-      <button class="primary" id="enhanceBtn" disabled>Enhance Image</button>
-      <button id="downloadBtn" disabled>Download Clear Image</button>
+
+      <button class="primary" id="enhanceBtn" disabled>Enhance & Upscale</button>
+      <button id="downloadBtn" disabled>Download Result</button>
       <button id="resetBtn" disabled>Reset</button>
     </div>
 
     <div class="status" id="status"></div>
-    <p class="note">This free version uses advanced sharpening, contrast and detail recovery. Results are good for most photos. For the absolute best quality you still need the paid Real-ESRGAN option.</p>
+    <p class="note">
+      Choose 2x or 3x for most photos. 3x on a 720p image produces roughly 2160p output.
+      This is a free offline upscaler (canvas-based). It improves clarity and resolution but cannot invent the same level of detail as paid AI models.
+    </p>
 
     <div class="preview-area">
       <div class="preview-card">
-        <div class="preview-header">Original</div>
+        <div class="preview-header">
+          <span>Original</span>
+          <span id="originalSize" class="info"></span>
+        </div>
         <div class="preview-body" id="originalPreview">
           <div class="placeholder">No image yet</div>
         </div>
       </div>
       <div class="preview-card">
-        <div class="preview-header">Enhanced</div>
+        <div class="preview-header">
+          <span>Enhanced</span>
+          <span id="enhancedSize" class="info"></span>
+        </div>
         <div class="preview-body" id="enhancedPreview">
           <div class="placeholder">Result will appear here</div>
         </div>
@@ -245,10 +271,13 @@
     const enhanceBtn = document.getElementById('enhanceBtn');
     const downloadBtn = document.getElementById('downloadBtn');
     const resetBtn = document.getElementById('resetBtn');
+    const scaleSelect = document.getElementById('scale');
     const strengthSelect = document.getElementById('strength');
     const status = document.getElementById('status');
     const originalPreview = document.getElementById('originalPreview');
     const enhancedPreview = document.getElementById('enhancedPreview');
+    const originalSizeEl = document.getElementById('originalSize');
+    const enhancedSizeEl = document.getElementById('enhancedSize');
 
     let originalImage = null;
     let enhancedCanvas = null;
@@ -284,7 +313,8 @@
           enhanceBtn.disabled = false;
           resetBtn.disabled = false;
           downloadBtn.disabled = true;
-          enhancedPreview.innerHTML = '<div class="placeholder">Click "Enhance Image"</div>';
+          enhancedPreview.innerHTML = '<div class="placeholder">Click "Enhance & Upscale"</div>';
+          enhancedSizeEl.textContent = '';
           status.textContent = 'Image loaded. Ready to enhance.';
         };
         img.src = e.target.result;
@@ -302,70 +332,84 @@
       canvas.height = img.height * scale;
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       originalPreview.appendChild(canvas);
+      originalSizeEl.textContent = img.width + ' × ' + img.height;
     }
 
     enhanceBtn.addEventListener('click', () => {
       if (!originalImage) return;
       enhanceBtn.disabled = true;
-      status.innerHTML = '<span class="spinner"></span> Enhancing image... please wait';
+      status.innerHTML = '<span class="spinner"></span> Upscaling and enhancing... please wait';
 
       setTimeout(() => {
         try {
+          const scale = parseInt(scaleSelect.value);
           const strength = parseInt(strengthSelect.value);
-          enhancedCanvas = enhanceImage(originalImage, strength);
+          enhancedCanvas = enhanceImage(originalImage, scale, strength);
           enhancedPreview.innerHTML = '';
           enhancedPreview.appendChild(enhancedCanvas);
+          enhancedSizeEl.textContent = enhancedCanvas.width + ' × ' + enhancedCanvas.height;
           downloadBtn.disabled = false;
-          status.textContent = 'Enhancement complete.';
+          status.textContent = 'Done! Output size: ' + enhancedCanvas.width + ' × ' + enhancedCanvas.height;
         } catch (err) {
           console.error(err);
           status.textContent = 'Error: ' + err.message;
         } finally {
           enhanceBtn.disabled = false;
         }
-      }, 50);
+      }, 40);
     });
 
-    function enhanceImage(img, strength) {
+    function enhanceImage(img, scaleFactor, strength) {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
 
-      let targetW = img.width;
-      let targetH = img.height;
+      const targetW = Math.round(img.width * scaleFactor);
+      const targetH = Math.round(img.height * scaleFactor);
 
-      if (strength >= 3 && (img.width < 900 || img.height < 900)) {
-        const factor = strength === 4 ? 1.8 : 1.4;
-        targetW = Math.round(img.width * factor);
-        targetH = Math.round(img.height * factor);
+      // Limit extreme sizes to avoid browser crash
+      const maxDim = 5000;
+      let finalW = targetW;
+      let finalH = targetH;
+      if (finalW > maxDim || finalH > maxDim) {
+        const ratio = Math.min(maxDim / finalW, maxDim / finalH);
+        finalW = Math.round(finalW * ratio);
+        finalH = Math.round(finalH * ratio);
       }
 
-      canvas.width = targetW;
-      canvas.height = targetH;
+      canvas.width = finalW;
+      canvas.height = finalH;
+
+      // High quality upscale
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(img, 0, 0, targetW, targetH);
+      ctx.drawImage(img, 0, 0, finalW, finalH);
 
       let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       let data = imageData.data;
 
-      if (strength >= 2) {
-        data = simpleDenoise(data, canvas.width, canvas.height, strength >= 3 ? 1 : 0);
+      // Denoise (stronger when upscaling a lot)
+      if (strength >= 2 || scaleFactor >= 2) {
+        data = simpleDenoise(data, canvas.width, canvas.height, strength >= 3 || scaleFactor >= 3);
       }
 
-      const contrast = 1 + (0.18 * strength);
-      const brightness = 4 * strength;
+      // Contrast + brightness
+      const contrast = 1 + (0.16 * strength);
+      const brightness = 3 * strength;
       applyContrastBrightness(data, contrast, brightness);
 
-      const amount = 0.55 + (0.45 * strength);
-      const radius = strength >= 3 ? 1.5 : 1;
+      // Main unsharp mask
+      const amount = 0.6 + (0.4 * strength) + (0.15 * (scaleFactor - 1));
+      const radius = scaleFactor >= 3 ? 1.8 : (scaleFactor >= 2 ? 1.4 : 1);
       unsharpMask(data, canvas.width, canvas.height, amount, radius);
 
-      if (strength >= 3) {
-        applyMicroContrast(data, 1.15 + (strength * 0.05));
+      // Extra micro-contrast
+      if (strength >= 2) {
+        applyMicroContrast(data, 1.12 + (strength * 0.04));
       }
 
-      if (strength >= 2) {
-        unsharpMask(data, canvas.width, canvas.height, 0.35 + (0.15 * strength), 0.8);
+      // Second sharpen pass for higher scales
+      if (scaleFactor >= 2 || strength >= 3) {
+        unsharpMask(data, canvas.width, canvas.height, 0.4 + (0.12 * strength), 0.9);
       }
 
       ctx.putImageData(new ImageData(data, canvas.width, canvas.height), 0, 0);
@@ -420,7 +464,7 @@
                   sum += copy2[((y + dy) * width + (x + dx)) * 4 + c];
                 }
               }
-              data[(y * width + x) * 4 + c] = (data[(y * width + x) * 4 + c] * 0.6) + (sum / 9 * 0.4);
+              data[(y * width + x) * 4 + c] = (data[(y * width + x) * 4 + c] * 0.65) + (sum / 9 * 0.35);
             }
           }
         }
@@ -432,8 +476,9 @@
       const blurred = new Uint8ClampedArray(data.length);
       for (let i = 0; i < data.length; i++) blurred[i] = data[i];
 
-      boxBlur(blurred, width, height, Math.max(1, Math.round(radius)));
-      boxBlur(blurred, width, height, Math.max(1, Math.round(radius)));
+      const r = Math.max(1, Math.round(radius));
+      boxBlur(blurred, width, height, r);
+      boxBlur(blurred, width, height, r);
 
       for (let i = 0; i < data.length; i += 4) {
         for (let c = 0; c < 3; c++) {
@@ -487,7 +532,7 @@
     downloadBtn.addEventListener('click', () => {
       if (!enhancedCanvas) return;
       const link = document.createElement('a');
-      link.download = 'enhanced-clear-image.png';
+      link.download = 'enhanced-' + enhancedCanvas.width + 'x' + enhancedCanvas.height + '.png';
       link.href = enhancedCanvas.toDataURL('image/png');
       link.click();
     });
@@ -497,6 +542,8 @@
       enhancedCanvas = null;
       originalPreview.innerHTML = '<div class="placeholder">No image yet</div>';
       enhancedPreview.innerHTML = '<div class="placeholder">Result will appear here</div>';
+      originalSizeEl.textContent = '';
+      enhancedSizeEl.textContent = '';
       enhanceBtn.disabled = true;
       downloadBtn.disabled = true;
       resetBtn.disabled = true;
