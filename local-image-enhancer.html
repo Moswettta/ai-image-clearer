@@ -37,7 +37,7 @@
 </head>
 <body>
   <h1>Free Image Clearer</h1>
-  <p class="subtitle">Offline · Upscale · Many skin tones · Strong 3D depth</p>
+  <p class="subtitle">Offline · Strong deblur & clarity · Upscale · Skin tones · 3D</p>
 
   <div class="container">
     <div class="upload-box" id="uploadBox">
@@ -56,8 +56,8 @@
       </select>
 
       <select id="mode">
-        <option value="natural" selected>Natural</option>
-        <option value="xray">X-Ray Detail</option>
+        <option value="natural">Natural</option>
+        <option value="xray" selected>X-Ray Detail (best for blurry)</option>
         <option value="soft">Soft</option>
       </select>
 
@@ -95,7 +95,7 @@
 
     <div class="status" id="status"></div>
     <p class="note">
-      More skin tones + stronger 3D depth effect. 
+      Stronger deblur and clarity for blurry photos. More skin tones + 3D depth. 
       This is still a free offline tool – good for clearer / higher-res results, but not true AI photographer quality.
     </p>
 
@@ -242,14 +242,20 @@
       naturalColor(data, mode, strength);
 
       if (mode === 'xray') {
-        unsharpMask(data, finalW, finalH, 0.7 + strength * 0.22, 1.2);
-        unsharpMask(data, finalW, finalH, 0.4, 0.7);
-        microContrast(data, 1.15 + strength * 0.05);
+        // Strong multi-pass deblur + clarity
+        unsharpMask(data, finalW, finalH, 0.95 + strength * 0.3, 1.6);
+        unsharpMask(data, finalW, finalH, 0.65 + strength * 0.15, 1.0);
+        unsharpMask(data, finalW, finalH, 0.4, 0.6);
+        microContrast(data, 1.22 + strength * 0.07);
       } else if (mode === 'soft') {
-        unsharpMask(data, finalW, finalH, 0.32 + strength * 0.1, 1.0);
+        unsharpMask(data, finalW, finalH, 0.4 + strength * 0.12, 1.1);
+        if (strength >= 2) unsharpMask(data, finalW, finalH, 0.25, 0.7);
       } else {
-        unsharpMask(data, finalW, finalH, 0.48 + strength * 0.15, 1.1);
-        if (strength >= 2) unsharpMask(data, finalW, finalH, 0.25, 0.75);
+        // Natural - stronger clarity for blurry photos
+        unsharpMask(data, finalW, finalH, 0.7 + strength * 0.25, 1.4);
+        unsharpMask(data, finalW, finalH, 0.45 + strength * 0.1, 0.9);
+        if (strength >= 2) unsharpMask(data, finalW, finalH, 0.3, 0.6);
+        microContrast(data, 1.1 + strength * 0.04);
       }
 
       if (mode !== 'soft') {
@@ -264,7 +270,6 @@
       return canvas;
     }
 
-    // Expanded skin tones
     function applySkinTone(data, skin) {
       if (skin === 'original') return;
 
@@ -295,13 +300,11 @@
       }
     }
 
-    // Stronger multi-pass 3D / emboss
     function apply3D(data, width, height, level) {
       const amounts = { light: 0.22, medium: 0.38, strong: 0.55, ultra: 0.72 };
       const strength = amounts[level] || 0.38;
       const copy = new Uint8ClampedArray(data);
 
-      // Horizontal + vertical relief
       for (let y = 1; y < height - 1; y++) {
         for (let x = 1; x < width - 1; x++) {
           const idx = (y * width + x) * 4;
@@ -320,7 +323,6 @@
         }
       }
 
-      // Second lighter pass for more depth on strong/ultra
       if (level === 'strong' || level === 'ultra') {
         const copy2 = new Uint8ClampedArray(data);
         const s2 = level === 'ultra' ? 0.28 : 0.18;
