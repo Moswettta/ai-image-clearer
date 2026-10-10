@@ -266,7 +266,7 @@
 </head>
 <body>
   <h1>AI Image Clearer</h1>
-  <p class="subtitle">Real AI deblurring and upscaling powered by Real-ESRGAN (via Replicate)</p>
+  <p class="subtitle">Turn blurry / low-res photos into sharp high-resolution images<br>(like modern smartphone quality) using Real-ESRGAN</p>
 
   <div class="container">
     <!-- API Token -->
@@ -300,18 +300,26 @@
         <div class="option-group">
           <label for="scale">Upscale Factor</label>
           <select id="scale">
-            <option value="2">2x</option>
-            <option value="4" selected>4x (recommended)</option>
+            <option value="2">2x (e.g. 720p → ~1440p)</option>
+            <option value="3">3x (e.g. 720p → ~2160p)</option>
+            <option value="4" selected>4x (e.g. 720p → ~2880p / high-res)</option>
+            <option value="6">6x (very high detail)</option>
+            <option value="8">8x (extreme upscale)</option>
           </select>
         </div>
         <div class="option-group">
           <label for="faceEnhance">Face Enhancement (GFPGAN)</label>
           <select id="faceEnhance">
-            <option value="true" selected>On (better for portraits)</option>
+            <option value="true" selected>On (better for portraits / people)</option>
             <option value="false">Off</option>
           </select>
         </div>
       </div>
+      <p class="note" style="margin-top: 12px;">
+        Higher scale = much larger and clearer image (like modern phone photos). 
+        4x on a 720p photo already produces very high resolution results. 
+        6x–8x can take longer and use more credits.
+      </p>
 
       <div class="controls" style="margin-top: 18px;">
         <button class="primary" id="enhanceBtn" disabled>Enhance with AI</button>
@@ -458,8 +466,8 @@
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            // Using a well-known Real-ESRGAN version that includes face enhancement option
-            version: '42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b',
+            // Real-ESRGAN model version (supports scale up to 10 and face enhancement)
+            version: 'b3ef194191d13140337468c916c2c5b96dd0cb06dffc032a022a31807f6a5ea8',
             input: {
               image: originalImageDataUrl,
               scale: scale,
