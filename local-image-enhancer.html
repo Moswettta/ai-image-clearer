@@ -25,7 +25,7 @@
     @media(max-width:768px){.preview-area{grid-template-columns:1fr}}
     .preview-card{background:#18181b;border-radius:14px;overflow:hidden;border:1px solid #27272a}
     .preview-header{padding:10px 14px;background:#27272a;font-weight:600;font-size:13px;display:flex;justify-content:space-between;align-items:center}
-    .preview-body{padding:12px;min-height:230px;display:flex;align-items:center;justify-content:center;background:#0f0f13}
+    .preview-body{padding:12px;min-height:230px;display:flex;align-items:center;justify-content:center;background:#0f0f13;overflow:auto}
     .preview-body canvas{max-width:100%;max-height:450px;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.4)}
     .placeholder{color:#52525b;font-size:14px}
     .status{text-align:center;color:#a1a1aa;font-size:13px;min-height:20px}
@@ -37,7 +37,7 @@
 </head>
 <body>
   <h1>Free Image Clearer</h1>
-  <p class="subtitle">Offline · Deblur · AI Look · Cartoon · Upscale · Skin · 3D</p>
+  <p class="subtitle">Offline · Deblur · AI Look · Cartoon · Zoom · Background · Skin · 3D</p>
 
   <div class="container">
     <div class="upload-box" id="uploadBox">
@@ -54,7 +54,6 @@
         <option value="3">3x upscale</option>
         <option value="4">4x upscale</option>
       </select>
-
       <select id="mode">
         <option value="natural">Natural</option>
         <option value="xray" selected>X-Ray Detail (best for blurry)</option>
@@ -62,7 +61,6 @@
         <option value="cartoon">Cartoon / 3D Stylized</option>
         <option value="soft">Soft</option>
       </select>
-
       <select id="skin">
         <option value="original" selected>Original skin</option>
         <option value="lighter">Lighter / Fair (American)</option>
@@ -75,7 +73,6 @@
         <option value="bronze">Bronze</option>
         <option value="rosy">Rosy / Pinkish</option>
       </select>
-
       <select id="effect3d">
         <option value="none">No 3D</option>
         <option value="light">Light 3D</option>
@@ -83,13 +80,28 @@
         <option value="strong">Strong 3D</option>
         <option value="ultra">Ultra 3D</option>
       </select>
-
       <select id="strength">
         <option value="1">Light</option>
         <option value="2" selected>Medium</option>
         <option value="3">Strong</option>
       </select>
-
+      <select id="bgColor">
+        <option value="none" selected>Original background</option>
+        <option value="sky">Sky blue</option>
+        <option value="green">Green nature</option>
+        <option value="sunset">Sunset warm</option>
+        <option value="purple">Purple dusk</option>
+        <option value="dark">Dark / night</option>
+        <option value="white">Clean white</option>
+        <option value="beige">Beige studio</option>
+      </select>
+      <select id="zoom">
+        <option value="1" selected>Zoom 100%</option>
+        <option value="1.25">Zoom 125%</option>
+        <option value="1.5">Zoom 150%</option>
+        <option value="2">Zoom 200%</option>
+        <option value="0.75">Zoom 75%</option>
+      </select>
       <button class="primary" id="enhanceBtn" disabled>Enhance</button>
       <button id="downloadBtn" disabled>Download</button>
       <button id="resetBtn" disabled>Reset</button>
@@ -97,28 +109,18 @@
 
     <div class="status" id="status"></div>
     <p class="note">
-      Modes: X-Ray (deblur), AI Look (polished), Cartoon/3D Stylized (illustrated look). Skin tones + 3D depth.<br>
-      This is a free offline tool. Cartoon mode approximates an illustrated style but cannot match full AI 3D character quality.
+      Zoom controls preview size. Background options change surrounding colors (simple offline method).<br>
+      Free offline tool – approximates styles; full AI quality needs the paid Real-ESRGAN option.
     </p>
 
     <div class="preview-area">
       <div class="preview-card">
-        <div class="preview-header">
-          <span>Original</span>
-          <span id="originalSize" class="info"></span>
-        </div>
-        <div class="preview-body" id="originalPreview">
-          <div class="placeholder">No image yet</div>
-        </div>
+        <div class="preview-header"><span>Original</span><span id="originalSize" class="info"></span></div>
+        <div class="preview-body" id="originalPreview"><div class="placeholder">No image yet</div></div>
       </div>
       <div class="preview-card">
-        <div class="preview-header">
-          <span>Enhanced</span>
-          <span id="enhancedSize" class="info"></span>
-        </div>
-        <div class="preview-body" id="enhancedPreview">
-          <div class="placeholder">Result will appear here</div>
-        </div>
+        <div class="preview-header"><span>Enhanced</span><span id="enhancedSize" class="info"></span></div>
+        <div class="preview-body" id="enhancedPreview"><div class="placeholder">Result will appear here</div></div>
       </div>
     </div>
   </div>
@@ -134,6 +136,8 @@
     const skinSelect = document.getElementById('skin');
     const effect3dSelect = document.getElementById('effect3d');
     const strengthSelect = document.getElementById('strength');
+    const bgColorSelect = document.getElementById('bgColor');
+    const zoomSelect = document.getElementById('zoom');
     const status = document.getElementById('status');
     const originalPreview = document.getElementById('originalPreview');
     const enhancedPreview = document.getElementById('enhancedPreview');
@@ -190,7 +194,6 @@
       if (!originalImage) return;
       enhanceBtn.disabled = true;
       status.innerHTML = '<span class="spinner"></span> Processing...';
-
       setTimeout(() => {
         try {
           const scale = parseInt(scaleSelect.value);
@@ -198,12 +201,21 @@
           const skin = skinSelect.value;
           const effect3d = effect3dSelect.value;
           const strength = parseInt(strengthSelect.value);
-          enhancedCanvas = enhanceImage(originalImage, scale, mode, skin, effect3d, strength);
+          const bg = bgColorSelect.value;
+          const zoom = parseFloat(zoomSelect.value);
+          enhancedCanvas = enhanceImage(originalImage, scale, mode, skin, effect3d, strength, bg);
           enhancedPreview.innerHTML = '';
-          enhancedPreview.appendChild(enhancedCanvas);
+          const displayCanvas = document.createElement('canvas');
+          const dctx = displayCanvas.getContext('2d');
+          displayCanvas.width = Math.round(enhancedCanvas.width * zoom);
+          displayCanvas.height = Math.round(enhancedCanvas.height * zoom);
+          dctx.imageSmoothingEnabled = true;
+          dctx.imageSmoothingQuality = 'high';
+          dctx.drawImage(enhancedCanvas, 0, 0, displayCanvas.width, displayCanvas.height);
+          enhancedPreview.appendChild(displayCanvas);
           enhancedSizeEl.textContent = enhancedCanvas.width + ' × ' + enhancedCanvas.height;
           downloadBtn.disabled = false;
-          status.textContent = 'Done! ' + enhancedCanvas.width + ' × ' + enhancedCanvas.height;
+          status.textContent = 'Done! ' + enhancedCanvas.width + ' × ' + enhancedCanvas.height + (zoom !== 1 ? ' (preview zoomed)' : '');
         } catch (err) {
           console.error(err);
           status.textContent = 'Error: ' + err.message;
@@ -213,7 +225,7 @@
       }, 30);
     });
 
-    function enhanceImage(img, scaleFactor, mode, skin, effect3d, strength) {
+    function enhanceImage(img, scaleFactor, mode, skin, effect3d, strength, bg) {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       let finalW = Math.round(img.width * scaleFactor);
@@ -231,10 +243,10 @@
       ctx.drawImage(img, 0, 0, finalW, finalH);
       let imageData = ctx.getImageData(0, 0, finalW, finalH);
       let data = imageData.data;
+      if (bg && bg !== 'none') applyBackgroundColor(data, finalW, finalH, bg);
       if (strength >= 2 || scaleFactor >= 2) data = gentleDenoise(data, finalW, finalH);
       applySkinTone(data, skin);
       if (mode !== 'cartoon') naturalColor(data, mode, strength);
-
       if (mode === 'xray') {
         unsharpMask(data, finalW, finalH, 0.95 + strength * 0.3, 1.6);
         unsharpMask(data, finalW, finalH, 0.65 + strength * 0.15, 1.0);
@@ -253,13 +265,34 @@
         if (strength >= 2) unsharpMask(data, finalW, finalH, 0.3, 0.6);
         microContrast(data, 1.1 + strength * 0.04);
       }
-
-      if (mode !== 'soft' && mode !== 'ailook' && mode !== 'cartoon') {
-        gentleContrast(data, 1.03 + strength * 0.025);
-      }
+      if (mode !== 'soft' && mode !== 'ailook' && mode !== 'cartoon') gentleContrast(data, 1.03 + strength * 0.025);
       if (effect3d !== 'none') apply3D(data, finalW, finalH, effect3d);
       ctx.putImageData(new ImageData(data, finalW, finalH), 0, 0);
       return canvas;
+    }
+
+    function applyBackgroundColor(data, width, height, bg) {
+      const colors = {
+        sky: [135, 206, 250], green: [90, 160, 90], sunset: [255, 140, 80],
+        purple: [120, 80, 160], dark: [25, 25, 40], white: [245, 245, 248], beige: [235, 220, 190]
+      };
+      const target = colors[bg];
+      if (!target) return;
+      const corners = [0, (width-1)*4, ((height-1)*width)*4, ((height-1)*width+(width-1))*4];
+      let cr=0, cg=0, cb=0;
+      for (const c of corners) { cr += data[c]; cg += data[c+1]; cb += data[c+2]; }
+      cr/=4; cg/=4; cb/=4;
+      const threshold = 55;
+      for (let i = 0; i < data.length; i += 4) {
+        const dr = data[i]-cr, dg = data[i+1]-cg, db = data[i+2]-cb;
+        const dist = Math.sqrt(dr*dr + dg*dg + db*db);
+        if (dist < threshold) {
+          const t = 1 - (dist / threshold);
+          data[i]   = clamp(data[i]   * (1 - t*0.85) + target[0] * t*0.85);
+          data[i+1] = clamp(data[i+1] * (1 - t*0.85) + target[1] * t*0.85);
+          data[i+2] = clamp(data[i+2] * (1 - t*0.85) + target[2] * t*0.85);
+        }
+      }
     }
 
     function applyCartoon(data, width, height, strength) {
@@ -268,259 +301,180 @@
       for (let y = r; y < height - r; y++) {
         for (let x = r; x < width - r; x++) {
           for (let c = 0; c < 3; c++) {
-            let sum = 0, count = 0;
-            for (let dy = -r; dy <= r; dy++) {
-              for (let dx = -r; dx <= r; dx++) {
-                sum += copy[((y + dy) * width + (x + dx)) * 4 + c];
-                count++;
-              }
-            }
-            const avg = sum / count;
-            const orig = data[(y * width + x) * 4 + c];
-            data[(y * width + x) * 4 + c] = orig * 0.25 + avg * 0.75;
+            let sum=0, count=0;
+            for (let dy=-r; dy<=r; dy++) for (let dx=-r; dx<=r; dx++) { sum += copy[((y+dy)*width+(x+dx))*4+c]; count++; }
+            data[(y*width+x)*4+c] = data[(y*width+x)*4+c]*0.25 + (sum/count)*0.75;
           }
         }
       }
       const levels = strength >= 3 ? 6 : (strength === 2 ? 8 : 10);
       const step = 255 / levels;
       for (let i = 0; i < data.length; i += 4) {
-        data[i] = clamp(Math.round(data[i] / step) * step);
-        data[i+1] = clamp(Math.round(data[i+1] / step) * step);
-        data[i+2] = clamp(Math.round(data[i+2] / step) * step);
+        data[i]=clamp(Math.round(data[i]/step)*step);
+        data[i+1]=clamp(Math.round(data[i+1]/step)*step);
+        data[i+2]=clamp(Math.round(data[i+2]/step)*step);
       }
       for (let i = 0; i < data.length; i += 4) {
-        let r = data[i], g = data[i+1], b = data[i+2];
-        const avg = (r + g + b) / 3;
-        const sat = 1.35 + strength * 0.08;
-        r = clamp(avg + (r - avg) * sat);
-        g = clamp(avg + (g - avg) * sat);
-        b = clamp(avg + (b - avg) * sat);
-        r = Math.min(255, r + 6); g = Math.min(255, g + 5); b = Math.min(255, b + 4);
-        data[i] = r; data[i+1] = g; data[i+2] = b;
+        let r=data[i], g=data[i+1], b=data[i+2];
+        const avg=(r+g+b)/3, sat=1.35+strength*0.08;
+        r=clamp(avg+(r-avg)*sat); g=clamp(avg+(g-avg)*sat); b=clamp(avg+(b-avg)*sat);
+        data[i]=Math.min(255,r+6); data[i+1]=Math.min(255,g+5); data[i+2]=Math.min(255,b+4);
       }
-      const edges = new Uint8ClampedArray(width * height);
-      const gray = new Float32Array(width * height);
-      for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-          const i = (y * width + x) * 4;
-          gray[y * width + x] = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
-        }
+      const edges = new Uint8ClampedArray(width*height);
+      const gray = new Float32Array(width*height);
+      for (let y=0; y<height; y++) for (let x=0; x<width; x++) {
+        const i=(y*width+x)*4;
+        gray[y*width+x]=0.299*data[i]+0.587*data[i+1]+0.114*data[i+2];
       }
-      for (let y = 1; y < height - 1; y++) {
-        for (let x = 1; x < width - 1; x++) {
-          const gx = -gray[(y-1)*width+(x-1)] + gray[(y-1)*width+(x+1)] - 2*gray[y*width+(x-1)] + 2*gray[y*width+(x+1)] - gray[(y+1)*width+(x-1)] + gray[(y+1)*width+(x+1)];
-          const gy = -gray[(y-1)*width+(x-1)] - 2*gray[(y-1)*width+x] - gray[(y-1)*width+(x+1)] + gray[(y+1)*width+(x-1)] + 2*gray[(y+1)*width+x] + gray[(y+1)*width+(x+1)];
-          const mag = Math.sqrt(gx*gx + gy*gy);
-          edges[y * width + x] = mag > (40 + strength * 10) ? 1 : 0;
-        }
+      for (let y=1; y<height-1; y++) for (let x=1; x<width-1; x++) {
+        const gx=-gray[(y-1)*width+(x-1)]+gray[(y-1)*width+(x+1)]-2*gray[y*width+(x-1)]+2*gray[y*width+(x+1)]-gray[(y+1)*width+(x-1)]+gray[(y+1)*width+(x+1)];
+        const gy=-gray[(y-1)*width+(x-1)]-2*gray[(y-1)*width+x]-gray[(y-1)*width+(x+1)]+gray[(y+1)*width+(x-1)]+2*gray[(y+1)*width+x]+gray[(y+1)*width+(x+1)];
+        edges[y*width+x]=Math.sqrt(gx*gx+gy*gy)>(40+strength*10)?1:0;
       }
-      for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-          if (edges[y * width + x]) {
-            const i = (y * width + x) * 4;
-            data[i] *= 0.25; data[i+1] *= 0.25; data[i+2] *= 0.25;
-          }
-        }
+      for (let y=0; y<height; y++) for (let x=0; x<width; x++) {
+        if (edges[y*width+x]) { const i=(y*width+x)*4; data[i]*=0.25; data[i+1]*=0.25; data[i+2]*=0.25; }
       }
-      unsharpMask(data, width, height, 0.5 + strength * 0.1, 1.0);
+      unsharpMask(data, width, height, 0.5+strength*0.1, 1.0);
     }
 
     function applySkinTone(data, skin) {
       if (skin === 'original') return;
       for (let i = 0; i < data.length; i += 4) {
-        let r = data[i], g = data[i+1], b = data[i+2];
-        if (skin === 'lighter') { r = clamp(r * 1.13 + 20); g = clamp(g * 1.11 + 15); b = clamp(b * 1.08 + 11); }
-        else if (skin === 'porcelain') { r = clamp(r * 1.16 + 26); g = clamp(g * 1.14 + 22); b = clamp(b * 1.12 + 20); }
-        else if (skin === 'cool') { r = clamp(r * 1.06 + 14); g = clamp(g * 1.08 + 16); b = clamp(b * 1.15 + 26); }
-        else if (skin === 'olive') { r = clamp(r * 1.04 + 6); g = clamp(g * 1.06 + 4); b = clamp(b * 0.92 - 8); }
-        else if (skin === 'tan') { r = clamp(r * 1.11 + 14); g = clamp(g * 1.03 + 5); b = clamp(b * 0.90 - 8); }
-        else if (skin === 'warm') { r = clamp(r * 1.09 + 10); g = clamp(g * 0.94 - 5); b = clamp(b * 0.85 - 12); }
-        else if (skin === 'deep') { r = clamp(r * 0.92 - 8); g = clamp(g * 0.88 - 12); b = clamp(b * 0.82 - 16); }
-        else if (skin === 'bronze') { r = clamp(r * 1.08 + 12); g = clamp(g * 0.98 + 2); b = clamp(b * 0.82 - 14); }
-        else if (skin === 'rosy') { r = clamp(r * 1.12 + 18); g = clamp(g * 1.02 + 6); b = clamp(b * 1.04 + 8); }
-        data[i] = r; data[i+1] = g; data[i+2] = b;
+        let r=data[i], g=data[i+1], b=data[i+2];
+        if (skin==='lighter'){r=clamp(r*1.13+20);g=clamp(g*1.11+15);b=clamp(b*1.08+11);}
+        else if(skin==='porcelain'){r=clamp(r*1.16+26);g=clamp(g*1.14+22);b=clamp(b*1.12+20);}
+        else if(skin==='cool'){r=clamp(r*1.06+14);g=clamp(g*1.08+16);b=clamp(b*1.15+26);}
+        else if(skin==='olive'){r=clamp(r*1.04+6);g=clamp(g*1.06+4);b=clamp(b*0.92-8);}
+        else if(skin==='tan'){r=clamp(r*1.11+14);g=clamp(g*1.03+5);b=clamp(b*0.90-8);}
+        else if(skin==='warm'){r=clamp(r*1.09+10);g=clamp(g*0.94-5);b=clamp(b*0.85-12);}
+        else if(skin==='deep'){r=clamp(r*0.92-8);g=clamp(g*0.88-12);b=clamp(b*0.82-16);}
+        else if(skin==='bronze'){r=clamp(r*1.08+12);g=clamp(g*0.98+2);b=clamp(b*0.82-14);}
+        else if(skin==='rosy'){r=clamp(r*1.12+18);g=clamp(g*1.02+6);b=clamp(b*1.04+8);}
+        data[i]=r; data[i+1]=g; data[i+2]=b;
       }
     }
 
     function apply3D(data, width, height, level) {
-      const amounts = { light: 0.22, medium: 0.38, strong: 0.55, ultra: 0.72 };
-      const strength = amounts[level] || 0.38;
-      const copy = new Uint8ClampedArray(data);
-      for (let y = 1; y < height - 1; y++) {
-        for (let x = 1; x < width - 1; x++) {
-          const idx = (y * width + x) * 4;
-          const left = (y * width + (x - 1)) * 4;
-          const right = (y * width + (x + 1)) * 4;
-          const up = ((y - 1) * width + x) * 4;
-          const down = ((y + 1) * width + x) * 4;
-          const hx = (copy[right] - copy[left]) * strength;
-          const hy = (copy[down] - copy[up]) * strength;
-          const diff = hx + hy;
-          for (let c = 0; c < 3; c++) data[idx + c] = clamp(copy[idx + c] + diff);
-        }
+      const amounts={light:0.22,medium:0.38,strong:0.55,ultra:0.72};
+      const strength=amounts[level]||0.38;
+      const copy=new Uint8ClampedArray(data);
+      for (let y=1;y<height-1;y++) for (let x=1;x<width-1;x++) {
+        const idx=(y*width+x)*4;
+        const hx=(copy[(y*width+(x+1))*4]-copy[(y*width+(x-1))*4])*strength;
+        const hy=(copy[((y+1)*width+x)*4]-copy[((y-1)*width+x)*4])*strength;
+        for (let c=0;c<3;c++) data[idx+c]=clamp(copy[idx+c]+hx+hy);
       }
-      if (level === 'strong' || level === 'ultra') {
-        const copy2 = new Uint8ClampedArray(data);
-        const s2 = level === 'ultra' ? 0.28 : 0.18;
-        for (let y = 2; y < height - 2; y++) {
-          for (let x = 2; x < width - 2; x++) {
-            const idx = (y * width + x) * 4;
-            const nw = ((y - 1) * width + (x - 1)) * 4;
-            const se = ((y + 1) * width + (x + 1)) * 4;
-            const diff = (copy2[se] - copy2[nw]) * s2;
-            for (let c = 0; c < 3; c++) data[idx + c] = clamp(copy2[idx + c] + diff);
-          }
+      if (level==='strong'||level==='ultra') {
+        const copy2=new Uint8ClampedArray(data);
+        const s2=level==='ultra'?0.28:0.18;
+        for (let y=2;y<height-2;y++) for (let x=2;x<width-2;x++) {
+          const idx=(y*width+x)*4;
+          const diff=(copy2[((y+1)*width+(x+1))*4]-copy2[((y-1)*width+(x-1))*4])*s2;
+          for (let c=0;c<3;c++) data[idx+c]=clamp(copy2[idx+c]+diff);
         }
       }
     }
 
     function applyAILook(data, width, height, strength) {
-      const copy = new Uint8ClampedArray(data);
-      const r = 1;
-      for (let y = r; y < height - r; y++) {
-        for (let x = r; x < width - r; x++) {
-          for (let c = 0; c < 3; c++) {
-            let sum = 0, count = 0;
-            for (let dy = -r; dy <= r; dy++) {
-              for (let dx = -r; dx <= r; dx++) {
-                sum += copy[((y + dy) * width + (x + dx)) * 4 + c]; count++;
-              }
-            }
-            const avg = sum / count;
-            const orig = data[(y * width + x) * 4 + c];
-            data[(y * width + x) * 4 + c] = orig * 0.35 + avg * 0.65;
-          }
-        }
+      const copy=new Uint8ClampedArray(data);
+      const r=1;
+      for (let y=r;y<height-r;y++) for (let x=r;x<width-r;x++) for (let c=0;c<3;c++) {
+        let sum=0,count=0;
+        for (let dy=-r;dy<=r;dy++) for (let dx=-r;dx<=r;dx++) { sum+=copy[((y+dy)*width+(x+dx))*4+c]; count++; }
+        data[(y*width+x)*4+c]=data[(y*width+x)*4+c]*0.35+(sum/count)*0.65;
       }
-      for (let i = 0; i < data.length; i += 4) {
-        let r = data[i], g = data[i+1], b = data[i+2];
-        r = Math.min(255, r + 8 + strength * 2);
-        g = Math.min(255, g + 6 + strength);
-        b = Math.min(255, b + 4);
-        const avg = (r + g + b) / 3;
-        const vib = 1.18 + strength * 0.04;
-        r = clamp(avg + (r - avg) * vib);
-        g = clamp(avg + (g - avg) * vib);
-        b = clamp(avg + (b - avg) * vib);
-        r = clamp(r * 1.04 + 4); b = clamp(b * 1.03 + 2);
-        data[i] = r; data[i+1] = g; data[i+2] = b;
+      for (let i=0;i<data.length;i+=4) {
+        let r=data[i],g=data[i+1],b=data[i+2];
+        r=Math.min(255,r+8+strength*2); g=Math.min(255,g+6+strength); b=Math.min(255,b+4);
+        const avg=(r+g+b)/3, vib=1.18+strength*0.04;
+        r=clamp(avg+(r-avg)*vib); g=clamp(avg+(g-avg)*vib); b=clamp(avg+(b-avg)*vib);
+        data[i]=clamp(r*1.04+4); data[i+1]=g; data[i+2]=clamp(b*1.03+2);
       }
-      unsharpMask(data, width, height, 0.85 + strength * 0.2, 1.3);
-      unsharpMask(data, width, height, 0.4, 0.7);
-      microContrast(data, 1.18 + strength * 0.05);
-      const glow = new Uint8ClampedArray(data);
-      boxBlur(glow, width, height, 2); boxBlur(glow, width, height, 2);
-      for (let i = 0; i < data.length; i += 4) {
-        for (let c = 0; c < 3; c++) {
-          if (data[i + c] > 100) data[i + c] = clamp(data[i + c] * 0.82 + glow[i + c] * 0.18);
-        }
-      }
+      unsharpMask(data,width,height,0.85+strength*0.2,1.3);
+      unsharpMask(data,width,height,0.4,0.7);
+      microContrast(data,1.18+strength*0.05);
+      const glow=new Uint8ClampedArray(data);
+      boxBlur(glow,width,height,2); boxBlur(glow,width,height,2);
+      for (let i=0;i<data.length;i+=4) for (let c=0;c<3;c++) if (data[i+c]>100) data[i+c]=clamp(data[i+c]*0.82+glow[i+c]*0.18);
     }
 
     function naturalColor(data, mode, strength) {
-      const vibrance = mode === 'xray' ? 1.07 : 1.03;
-      const brightness = mode === 'soft' ? 2 : (mode === 'xray' ? 5 : 3);
-      for (let i = 0; i < data.length; i += 4) {
-        let r = data[i], g = data[i+1], b = data[i+2];
-        r = Math.min(255, r + brightness); g = Math.min(255, g + brightness); b = Math.min(255, b + brightness);
-        const avg = (r + g + b) / 3;
-        r = clamp(avg + (r - avg) * vibrance); g = clamp(avg + (g - avg) * vibrance); b = clamp(avg + (b - avg) * vibrance);
-        data[i] = r; data[i+1] = g; data[i+2] = b;
+      const vibrance=mode==='xray'?1.07:1.03;
+      const brightness=mode==='soft'?2:(mode==='xray'?5:3);
+      for (let i=0;i<data.length;i+=4) {
+        let r=data[i],g=data[i+1],b=data[i+2];
+        r=Math.min(255,r+brightness); g=Math.min(255,g+brightness); b=Math.min(255,b+brightness);
+        const avg=(r+g+b)/3;
+        data[i]=clamp(avg+(r-avg)*vibrance); data[i+1]=clamp(avg+(g-avg)*vibrance); data[i+2]=clamp(avg+(b-avg)*vibrance);
       }
     }
 
     function gentleContrast(data, amount) {
-      for (let i = 0; i < data.length; i += 4) {
-        data[i] = clamp((data[i] - 128) * amount + 128);
-        data[i+1] = clamp((data[i+1] - 128) * amount + 128);
-        data[i+2] = clamp((data[i+2] - 128) * amount + 128);
+      for (let i=0;i<data.length;i+=4) {
+        data[i]=clamp((data[i]-128)*amount+128);
+        data[i+1]=clamp((data[i+1]-128)*amount+128);
+        data[i+2]=clamp((data[i+2]-128)*amount+128);
       }
     }
 
     function microContrast(data, amount) {
-      for (let i = 0; i < data.length; i += 4) {
-        data[i] = clamp((data[i] - 128) * amount + 128);
-        data[i+1] = clamp((data[i+1] - 128) * amount + 128);
-        data[i+2] = clamp((data[i+2] - 128) * amount + 128);
+      for (let i=0;i<data.length;i+=4) {
+        data[i]=clamp((data[i]-128)*amount+128);
+        data[i+1]=clamp((data[i+1]-128)*amount+128);
+        data[i+2]=clamp((data[i+2]-128)*amount+128);
       }
     }
 
     function gentleDenoise(data, width, height) {
-      const copy = new Uint8ClampedArray(data);
-      const r = 1;
-      for (let y = r; y < height - r; y++) {
-        for (let x = r; x < width - r; x++) {
-          for (let c = 0; c < 3; c++) {
-            let sum = 0, count = 0;
-            for (let dy = -r; dy <= r; dy++) {
-              for (let dx = -r; dx <= r; dx++) {
-                sum += copy[((y + dy) * width + (x + dx)) * 4 + c]; count++;
-              }
-            }
-            const avg = sum / count;
-            const orig = data[(y * width + x) * 4 + c];
-            data[(y * width + x) * 4 + c] = orig * 0.6 + avg * 0.4;
-          }
-        }
+      const copy=new Uint8ClampedArray(data);
+      const r=1;
+      for (let y=r;y<height-r;y++) for (let x=r;x<width-r;x++) for (let c=0;c<3;c++) {
+        let sum=0,count=0;
+        for (let dy=-r;dy<=r;dy++) for (let dx=-r;dx<=r;dx++) { sum+=copy[((y+dy)*width+(x+dx))*4+c]; count++; }
+        data[(y*width+x)*4+c]=data[(y*width+x)*4+c]*0.6+(sum/count)*0.4;
       }
       return data;
     }
 
     function unsharpMask(data, width, height, amount, radius) {
-      const blurred = new Uint8ClampedArray(data.length);
-      for (let i = 0; i < data.length; i++) blurred[i] = data[i];
-      const rad = Math.max(1, Math.round(radius));
-      boxBlur(blurred, width, height, rad); boxBlur(blurred, width, height, rad);
-      for (let i = 0; i < data.length; i += 4) {
-        for (let c = 0; c < 3; c++) data[i + c] = clamp(data[i + c] + amount * (data[i + c] - blurred[i + c]));
-      }
+      const blurred=new Uint8ClampedArray(data.length);
+      for (let i=0;i<data.length;i++) blurred[i]=data[i];
+      const rad=Math.max(1,Math.round(radius));
+      boxBlur(blurred,width,height,rad); boxBlur(blurred,width,height,rad);
+      for (let i=0;i<data.length;i+=4) for (let c=0;c<3;c++) data[i+c]=clamp(data[i+c]+amount*(data[i+c]-blurred[i+c]));
     }
 
     function boxBlur(data, width, height, radius) {
-      const temp = new Uint8ClampedArray(data.length);
-      for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-          for (let c = 0; c < 3; c++) {
-            let sum = 0, count = 0;
-            for (let dx = -radius; dx <= radius; dx++) {
-              const nx = x + dx;
-              if (nx >= 0 && nx < width) { sum += data[(y * width + nx) * 4 + c]; count++; }
-            }
-            temp[(y * width + x) * 4 + c] = sum / count;
-          }
-        }
+      const temp=new Uint8ClampedArray(data.length);
+      for (let y=0;y<height;y++) for (let x=0;x<width;x++) for (let c=0;c<3;c++) {
+        let sum=0,count=0;
+        for (let dx=-radius;dx<=radius;dx++) { const nx=x+dx; if(nx>=0&&nx<width){sum+=data[(y*width+nx)*4+c];count++;} }
+        temp[(y*width+x)*4+c]=sum/count;
       }
-      for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-          for (let c = 0; c < 3; c++) {
-            let sum = 0, count = 0;
-            for (let dy = -radius; dy <= radius; dy++) {
-              const ny = y + dy;
-              if (ny >= 0 && ny < height) { sum += temp[(ny * width + x) * 4 + c]; count++; }
-            }
-            data[(y * width + x) * 4 + c] = sum / count;
-          }
-        }
+      for (let y=0;y<height;y++) for (let x=0;x<width;x++) for (let c=0;c<3;c++) {
+        let sum=0,count=0;
+        for (let dy=-radius;dy<=radius;dy++) { const ny=y+dy; if(ny>=0&&ny<height){sum+=temp[(ny*width+x)*4+c];count++;} }
+        data[(y*width+x)*4+c]=sum/count;
       }
     }
 
-    function clamp(v) { return Math.max(0, Math.min(255, Math.round(v))); }
+    function clamp(v){return Math.max(0,Math.min(255,Math.round(v)));}
 
     downloadBtn.addEventListener('click', () => {
       if (!enhancedCanvas) return;
-      const link = document.createElement('a');
-      link.download = 'enhanced-' + enhancedCanvas.width + 'x' + enhancedCanvas.height + '.png';
-      link.href = enhancedCanvas.toDataURL('image/png');
+      const link=document.createElement('a');
+      link.download='enhanced-'+enhancedCanvas.width+'x'+enhancedCanvas.height+'.png';
+      link.href=enhancedCanvas.toDataURL('image/png');
       link.click();
     });
 
     resetBtn.addEventListener('click', () => {
-      originalImage = null; enhancedCanvas = null;
-      originalPreview.innerHTML = '<div class="placeholder">No image yet</div>';
-      enhancedPreview.innerHTML = '<div class="placeholder">Result will appear here</div>';
-      originalSizeEl.textContent = ''; enhancedSizeEl.textContent = '';
-      enhanceBtn.disabled = true; downloadBtn.disabled = true; resetBtn.disabled = true;
-      status.textContent = ''; fileInput.value = '';
+      originalImage=null; enhancedCanvas=null;
+      originalPreview.innerHTML='<div class="placeholder">No image yet</div>';
+      enhancedPreview.innerHTML='<div class="placeholder">Result will appear here</div>';
+      originalSizeEl.textContent=''; enhancedSizeEl.textContent='';
+      enhanceBtn.disabled=true; downloadBtn.disabled=true; resetBtn.disabled=true;
+      status.textContent=''; fileInput.value='';
     });
   </script>
 </body>
