@@ -48,26 +48,29 @@
 </head>
 <body>
   <h1>AI Image Clearer</h1>
-  <p class="subtitle">Real-ESRGAN deblur & upscale</p>
+  <p class="subtitle">Real-ESRGAN deblur &amp; upscale</p>
   <div class="banner">
-    <b>For full AI enhancement use Netlify:</b><br>
-    <a href="https://imagecleanerr.netlify.app" target="_blank" rel="noopener">https://imagecleanerr.netlify.app</a><br>
-    GitHub Pages is static and blocked by browser CORS. Free offline version works on both hosts.
+    <b>Netlify:</b> works out of the box → <a href="https://imagecleanerr.netlify.app" target="_blank" rel="noopener">imagecleanerr.netlify.app</a><br>
+    <b>GitHub Pages:</b> deploy free Cloudflare Worker (folder <code>cloudflare-worker/</code> in repo), paste worker URL below, Save Token.
   </div>
 
   <div class="container">
     <div class="card">
-      <h2>1. Replicate API Token</h2>
+      <h2>1. API Token + Worker (for GitHub Pages)</h2>
       <div class="api-row">
         <div>
-          <label for="apiToken">Your Replicate API Token</label>
+          <label for="apiToken">Replicate API Token</label>
           <input type="password" id="apiToken" placeholder="r8_xxxxxxxxxxxxxxxxxxxxxxxx">
         </div>
-        <button id="saveTokenBtn">Save Token</button>
+        <button id="saveTokenBtn">Save</button>
+      </div>
+      <div style="margin-top:14px">
+        <label for="workerUrl">Cloudflare Worker URL (needed on GitHub Pages only)</label>
+        <input type="text" id="workerUrl" placeholder="https://ai-image-proxy.YOUR_NAME.workers.dev">
       </div>
       <p class="note">
-        Get a free token at <a href="https://replicate.com/account/api-tokens" target="_blank" rel="noopener">replicate.com/account/api-tokens</a>.
-        Free credits are limited. Token stays only in your browser.
+        Token: <a href="https://replicate.com/account/api-tokens" target="_blank" rel="noopener">replicate.com/account/api-tokens</a>.
+        Worker setup: see <code>cloudflare-worker/README.md</code> in the repo.
       </p>
     </div>
 
@@ -99,7 +102,6 @@
           </select>
         </div>
       </div>
-      <p class="note" style="margin-top:12px">Higher scale = larger clearer image. 4x is a good balance.</p>
       <div class="controls" style="margin-top:18px">
         <button class="primary" id="enhanceBtn" disabled>Enhance with AI</button>
         <button id="downloadBtn" disabled>Download Result</button>
@@ -129,6 +131,7 @@
     const resetBtn = document.getElementById('resetBtn');
     const saveTokenBtn = document.getElementById('saveTokenBtn');
     const apiTokenInput = document.getElementById('apiToken');
+    const workerUrlInput = document.getElementById('workerUrl');
     const scaleSelect = document.getElementById('scale');
     const faceEnhanceSelect = document.getElementById('faceEnhance');
     const statusEl = document.getElementById('status');
@@ -140,20 +143,24 @@
     let isProcessing = false;
 
     const isNetlify = window.location.hostname.includes('netlify');
-    const REAL_ESRGAN_VERSION = 'b3ef194191d13140337468c916c2c5b96dd0cb06dffc032a022a31807f6a5ea8';
 
     const savedToken = localStorage.getItem('replicate_api_token');
     if (savedToken) apiTokenInput.value = savedToken;
+    const savedWorker = localStorage.getItem('cf_worker_url');
+    if (savedWorker) workerUrlInput.value = savedWorker;
 
     saveTokenBtn.addEventListener('click', () => {
       const token = apiTokenInput.value.trim();
       if (token) {
         localStorage.setItem('replicate_api_token', token);
-        statusEl.textContent = 'Token saved in browser.';
+        statusEl.textContent = 'Saved.';
       } else {
         localStorage.removeItem('replicate_api_token');
         statusEl.textContent = 'Token cleared.';
       }
+      const w = workerUrlInput.value.trim().replace(/\/$/, '');
+      if (w) localStorage.setItem('cf_worker_url', w);
+      else localStorage.removeItem('cf_worker_url');
     });
 
     uploadBox.addEventListener('click', () => fileInput.click());
@@ -181,7 +188,7 @@
         downloadBtn.disabled = true;
         enhancedPreview.innerHTML = '<div class="placeholder">Click "Enhance with AI"</div>';
         enhancedImageUrl = null;
-        statusEl.textContent = 'Image loaded. Ready to enhance.';
+        statusEl.textContent = 'Image loaded.';
       };
       reader.readAsDataURL(file);
     }
@@ -192,11 +199,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, image, scale, face_enhance: faceEnhance })
       });
-      const text = await res.text();
-      let data;
-      try { data = JSON.parse(text); } catch (e) {
-        throw new Error('Netlify function not available.');
-      }
+      const data = await res.json();
       if (!res.ok) throw new Error(data.error || ('API error ' + res.status));
       return data;
     }
@@ -207,12 +210,30 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, predictionId: id })
       });
-      const text = await res.text();
-      let data;
-      try { data = JSON.parse(text); } catch (e) {
-        throw new Error('Status proxy returned non-JSON');
-      }
+      const data = await res.json();
       if (!res.ok) throw new Error(data.error || ('Poll error ' + res.status));
+      return data;
+    }
+
+    async function createPredictionWorker(baseUrl, token, image, scale, faceEnhance) {
+      const res = await fetch(baseUrl + '/enhance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, image, scale, face_enhance: faceEnhance })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || ('Worker error ' + res.status));
+      return data;
+    }
+
+    async function pollPredictionWorker(baseUrl, token, predictionId) {
+      const res = await fetch(baseUrl + '/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, predictionId })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || ('Worker poll error ' + res.status));
       return data;
     }
 
@@ -229,21 +250,30 @@
       statusEl.innerHTML = '<span class="spinner"></span> Starting AI enhancement...';
 
       try {
-        if (!isNetlify) {
-          throw new Error('AI enhancement cannot run on GitHub Pages (browser CORS block). Please use the Netlify site: https://imagecleanerr.netlify.app');
-        }
-
         const scale = parseInt(scaleSelect.value, 10);
         const faceEnhance = faceEnhanceSelect.value === 'true';
+        const workerUrl = (workerUrlInput.value.trim().replace(/\/$/, '')) || localStorage.getItem('cf_worker_url') || '';
 
-        let result = await createPredictionNetlify(token, originalImageDataUrl, scale, faceEnhance);
+        let result;
+        if (isNetlify) {
+          result = await createPredictionNetlify(token, originalImageDataUrl, scale, faceEnhance);
+        } else if (workerUrl) {
+          result = await createPredictionWorker(workerUrl, token, originalImageDataUrl, scale, faceEnhance);
+        } else {
+          throw new Error('On GitHub Pages: deploy Cloudflare Worker (cloudflare-worker/ in repo), paste its URL above, click Save. Or use https://imagecleanerr.netlify.app');
+        }
+
         let status = result.status;
         const predictionId = result.id;
 
         while (status !== 'succeeded' && status !== 'failed' && status !== 'canceled') {
           statusEl.innerHTML = '<span class="spinner"></span> Processing... (' + status + ')';
           await new Promise(r => setTimeout(r, 2000));
-          result = await pollPredictionNetlify(token, predictionId);
+          if (isNetlify) {
+            result = await pollPredictionNetlify(token, predictionId);
+          } else {
+            result = await pollPredictionWorker(workerUrl, token, predictionId);
+          }
           status = result.status;
         }
 
@@ -266,7 +296,7 @@
       } catch (err) {
         console.error(err);
         let msg = err.message || 'Something went wrong';
-        if (msg.includes('insufficient credit') || msg.includes('Payment Required') || msg.includes('402')) {
+        if (msg.includes('insufficient credit') || msg.includes('402')) {
           msg = 'No Replicate credits left. Buy a small amount at https://replicate.com/account/billing';
         }
         statusEl.textContent = 'Error: ' + msg;
