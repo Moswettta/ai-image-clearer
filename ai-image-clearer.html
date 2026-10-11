@@ -3,273 +3,53 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Image Clearer - Real-ESRGAN Deblur & Upscale</title>
+  <title>AI Image Clearer - Real-ESRGAN</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    }
-
-    body {
-      background: #0f0f13;
-      color: #e4e4e7;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 30px 20px;
-    }
-
-    h1 {
-      font-size: 1.9rem;
-      margin-bottom: 6px;
-      background: linear-gradient(90deg, #a78bfa, #60a5fa);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .subtitle {
-      color: #a1a1aa;
-      margin-bottom: 28px;
-      text-align: center;
-      font-size: 0.95rem;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 1100px;
-      display: flex;
-      flex-direction: column;
-      gap: 22px;
-    }
-
-    .card {
-      background: #18181b;
-      border: 1px solid #27272a;
-      border-radius: 14px;
-      padding: 20px;
-    }
-
-    .card h2 {
-      font-size: 1rem;
-      margin-bottom: 14px;
-      color: #d4d4d8;
-    }
-
-    label {
-      display: block;
-      font-size: 0.85rem;
-      color: #a1a1aa;
-      margin-bottom: 6px;
-    }
-
-    input[type="text"], input[type="password"], select {
-      width: 100%;
-      background: #27272a;
-      border: 1px solid #3f3f46;
-      color: #e4e4e7;
-      padding: 11px 14px;
-      border-radius: 9px;
-      font-size: 14px;
-      outline: none;
-    }
-
-    input[type="text"]:focus, input[type="password"]:focus, select:focus {
-      border-color: #a78bfa;
-    }
-
-    .api-row {
-      display: flex;
-      gap: 10px;
-      align-items: flex-end;
-    }
-
-    .api-row > div {
-      flex: 1;
-    }
-
-    button {
-      background: #27272a;
-      color: white;
-      border: none;
-      padding: 11px 18px;
-      border-radius: 9px;
-      font-size: 14px;
-      cursor: pointer;
-      transition: all 0.2s;
-      white-space: nowrap;
-    }
-
-    button:hover:not(:disabled) {
-      background: #3f3f46;
-    }
-
-    button:disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
-    }
-
-    button.primary {
-      background: linear-gradient(90deg, #8b5cf6, #6366f1);
-    }
-
-    button.primary:hover:not(:disabled) {
-      background: linear-gradient(90deg, #7c3aed, #4f46e5);
-    }
-
-    .upload-box {
-      border: 2px dashed #3f3f46;
-      border-radius: 14px;
-      padding: 45px 20px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.25s;
-      background: #18181b;
-    }
-
-    .upload-box:hover, .upload-box.dragover {
-      border-color: #a78bfa;
-      background: #1f1f23;
-    }
-
-    .upload-box p {
-      color: #a1a1aa;
-      margin-top: 10px;
-      font-size: 0.95rem;
-    }
-
-    #fileInput {
-      display: none;
-    }
-
-    .controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .preview-area {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 18px;
-    }
-
-    @media (max-width: 780px) {
-      .preview-area {
-        grid-template-columns: 1fr;
-      }
-      .api-row {
-        flex-direction: column;
-        align-items: stretch;
-      }
-    }
-
-    .preview-card {
-      background: #18181b;
-      border-radius: 14px;
-      overflow: hidden;
-      border: 1px solid #27272a;
-    }
-
-    .preview-header {
-      padding: 11px 16px;
-      background: #27272a;
-      font-weight: 600;
-      font-size: 13px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .preview-body {
-      padding: 14px;
-      min-height: 260px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #0f0f13;
-    }
-
-    .preview-body img {
-      max-width: 100%;
-      max-height: 420px;
-      border-radius: 8px;
-      box-shadow: 0 4px 18px rgba(0,0,0,0.45);
-    }
-
-    .placeholder {
-      color: #52525b;
-      font-size: 14px;
-    }
-
-    .status {
-      text-align: center;
-      color: #a1a1aa;
-      font-size: 14px;
-      min-height: 22px;
-    }
-
-    .spinner {
-      display: inline-block;
-      width: 16px;
-      height: 16px;
-      border: 2px solid #a78bfa;
-      border-top-color: transparent;
-      border-radius: 50%;
-      animation: spin 0.75s linear infinite;
-      margin-right: 7px;
-      vertical-align: middle;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    .note {
-      font-size: 12px;
-      color: #71717a;
-      margin-top: 8px;
-      line-height: 1.45;
-    }
-
-    a {
-      color: #a78bfa;
-      text-decoration: none;
-    }
-
-    a:hover {
-      text-decoration: underline;
-    }
-
-    .options-row {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-      margin-top: 12px;
-    }
-
-    .option-group {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .option-group label {
-      margin-bottom: 0;
-    }
+    *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif}
+    body{background:#0f0f13;color:#e4e4e7;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:30px 20px}
+    h1{font-size:1.9rem;margin-bottom:6px;background:linear-gradient(90deg,#a78bfa,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .subtitle{color:#a1a1aa;margin-bottom:28px;text-align:center;font-size:.95rem}
+    .container{width:100%;max-width:1100px;display:flex;flex-direction:column;gap:22px}
+    .card{background:#18181b;border:1px solid #27272a;border-radius:14px;padding:20px}
+    .card h2{font-size:1rem;margin-bottom:14px;color:#d4d4d8}
+    label{display:block;font-size:.85rem;color:#a1a1aa;margin-bottom:6px}
+    input[type="text"],input[type="password"],select{width:100%;background:#27272a;border:1px solid #3f3f46;color:#e4e4e7;padding:11px 14px;border-radius:9px;font-size:14px;outline:none}
+    input:focus,select:focus{border-color:#a78bfa}
+    .api-row{display:flex;gap:10px;align-items:flex-end}
+    .api-row>div{flex:1}
+    button{background:#27272a;color:#fff;border:none;padding:11px 18px;border-radius:9px;font-size:14px;cursor:pointer;transition:all .2s;white-space:nowrap}
+    button:hover:not(:disabled){background:#3f3f46}
+    button:disabled{opacity:.45;cursor:not-allowed}
+    button.primary{background:linear-gradient(90deg,#8b5cf6,#6366f1)}
+    button.primary:hover:not(:disabled){background:linear-gradient(90deg,#7c3aed,#4f46e5)}
+    .upload-box{border:2px dashed #3f3f46;border-radius:14px;padding:45px 20px;text-align:center;cursor:pointer;transition:all .25s;background:#18181b}
+    .upload-box:hover,.upload-box.dragover{border-color:#a78bfa;background:#1f1f23}
+    .upload-box p{color:#a1a1aa;margin-top:10px;font-size:.95rem}
+    #fileInput{display:none}
+    .controls{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center}
+    .preview-area{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    @media(max-width:780px){.preview-area{grid-template-columns:1fr}.api-row{flex-direction:column;align-items:stretch}}
+    .preview-card{background:#18181b;border-radius:14px;overflow:hidden;border:1px solid #27272a}
+    .preview-header{padding:11px 16px;background:#27272a;font-weight:600;font-size:13px}
+    .preview-body{padding:14px;min-height:260px;display:flex;align-items:center;justify-content:center;background:#0f0f13}
+    .preview-body img{max-width:100%;max-height:420px;border-radius:8px;box-shadow:0 4px 18px rgba(0,0,0,.45)}
+    .placeholder{color:#52525b;font-size:14px}
+    .status{text-align:center;color:#a1a1aa;font-size:14px;min-height:22px}
+    .spinner{display:inline-block;width:16px;height:16px;border:2px solid #a78bfa;border-top-color:transparent;border-radius:50%;animation:spin .75s linear infinite;margin-right:7px;vertical-align:middle}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .note{font-size:12px;color:#71717a;margin-top:8px;line-height:1.45}
+    a{color:#a78bfa;text-decoration:none}
+    a:hover{text-decoration:underline}
+    .options-row{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px}
+    .option-group{display:flex;flex-direction:column;gap:4px}
+    .option-group label{margin-bottom:0}
   </style>
 </head>
 <body>
   <h1>AI Image Clearer</h1>
-  <p class="subtitle">Turn blurry / low-res photos into sharp high-resolution images<br>(like modern smartphone quality) using Real-ESRGAN</p>
+  <p class="subtitle">Real-ESRGAN deblur & upscale (works on GitHub Pages and Netlify)</p>
 
   <div class="container">
-    <!-- API Token -->
     <div class="card">
       <h2>1. Replicate API Token</h2>
       <div class="api-row">
@@ -281,47 +61,40 @@
       </div>
       <p class="note">
         Get a free token at <a href="https://replicate.com/account/api-tokens" target="_blank" rel="noopener">replicate.com/account/api-tokens</a>.
-        The free tier is enough for personal use. Token is stored only in your browser (localStorage).
+        Free credits are limited — buy a small amount if you run out. Token stays only in your browser.
       </p>
     </div>
 
-    <!-- Upload -->
     <div class="upload-box" id="uploadBox">
-      <div style="font-size: 38px; opacity: 0.7;">IMG</div>
+      <div style="font-size:38px;opacity:.7">IMG</div>
       <p><strong>Click or drag and drop</strong> your blurry image here</p>
-      <p style="font-size: 13px; margin-top: 5px;">JPG, PNG, WEBP supported</p>
+      <p style="font-size:13px;margin-top:5px">JPG, PNG, WEBP (under 8 MB)</p>
       <input type="file" id="fileInput" accept="image/*">
     </div>
 
-    <!-- Options + Controls -->
     <div class="card">
       <h2>2. Enhancement Options</h2>
       <div class="options-row">
         <div class="option-group">
           <label for="scale">Upscale Factor</label>
           <select id="scale">
-            <option value="2">2x (e.g. 720p → ~1440p)</option>
-            <option value="3">3x (e.g. 720p → ~2160p)</option>
-            <option value="4" selected>4x (e.g. 720p → ~2880p / high-res)</option>
-            <option value="6">6x (very high detail)</option>
-            <option value="8">8x (extreme upscale)</option>
+            <option value="2">2x</option>
+            <option value="3">3x</option>
+            <option value="4" selected>4x</option>
+            <option value="6">6x</option>
+            <option value="8">8x</option>
           </select>
         </div>
         <div class="option-group">
-          <label for="faceEnhance">Face Enhancement (GFPGAN)</label>
+          <label for="faceEnhance">Face Enhancement</label>
           <select id="faceEnhance">
-            <option value="true" selected>On (better for portraits / people)</option>
+            <option value="true" selected>On (better for people)</option>
             <option value="false">Off</option>
           </select>
         </div>
       </div>
-      <p class="note" style="margin-top: 12px;">
-        Higher scale = much larger and clearer image (like modern phone photos). 
-        4x on a 720p photo already produces very high resolution results. 
-        6x–8x can take longer and use more credits.
-      </p>
-
-      <div class="controls" style="margin-top: 18px;">
+      <p class="note" style="margin-top:12px">Higher scale = larger clearer image. 4x is a good balance. 6x–8x uses more credits.</p>
+      <div class="controls" style="margin-top:18px">
         <button class="primary" id="enhanceBtn" disabled>Enhance with AI</button>
         <button id="downloadBtn" disabled>Download Result</button>
         <button id="resetBtn" disabled>Reset</button>
@@ -330,24 +103,14 @@
 
     <div class="status" id="status"></div>
 
-    <!-- Previews -->
     <div class="preview-area">
       <div class="preview-card">
-        <div class="preview-header">
-          <span>Original</span>
-        </div>
-        <div class="preview-body" id="originalPreview">
-          <div class="placeholder">No image uploaded</div>
-        </div>
+        <div class="preview-header">Original</div>
+        <div class="preview-body" id="originalPreview"><div class="placeholder">No image uploaded</div></div>
       </div>
-
       <div class="preview-card">
-        <div class="preview-header">
-          <span>AI Enhanced</span>
-        </div>
-        <div class="preview-body" id="enhancedPreview">
-          <div class="placeholder">Result will appear here</div>
-        </div>
+        <div class="preview-header">AI Enhanced</div>
+        <div class="preview-body" id="enhancedPreview"><div class="placeholder">Result will appear here</div></div>
       </div>
     </div>
   </div>
@@ -370,11 +133,11 @@
     let enhancedImageUrl = null;
     let isProcessing = false;
 
-    // Load saved token
+    const isNetlify = window.location.hostname.includes('netlify');
+    const REAL_ESRGAN_VERSION = 'b3ef194191d13140337468c916c2c5b96dd0cb06dffc032a022a31807f6a5ea8';
+
     const savedToken = localStorage.getItem('replicate_api_token');
-    if (savedToken) {
-      apiTokenInput.value = savedToken;
-    }
+    if (savedToken) apiTokenInput.value = savedToken;
 
     saveTokenBtn.addEventListener('click', () => {
       const token = apiTokenInput.value.trim();
@@ -387,42 +150,26 @@
       }
     });
 
-    // Upload handlers
     uploadBox.addEventListener('click', () => fileInput.click());
-    uploadBox.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      uploadBox.classList.add('dragover');
-    });
-    uploadBox.addEventListener('dragleave', () => {
-      uploadBox.classList.remove('dragover');
-    });
-    uploadBox.addEventListener('drop', (e) => {
+    uploadBox.addEventListener('dragover', e => { e.preventDefault(); uploadBox.classList.add('dragover'); });
+    uploadBox.addEventListener('dragleave', () => uploadBox.classList.remove('dragover'));
+    uploadBox.addEventListener('drop', e => {
       e.preventDefault();
       uploadBox.classList.remove('dragover');
-      if (e.dataTransfer.files.length) {
-        handleFile(e.dataTransfer.files[0]);
-      }
+      if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
     });
-    fileInput.addEventListener('change', (e) => {
-      if (e.target.files.length) handleFile(e.target.files[0]);
-    });
+    fileInput.addEventListener('change', e => { if (e.target.files.length) handleFile(e.target.files[0]); });
 
     function handleFile(file) {
-      if (!file.type.startsWith('image/')) {
-        alert('Please select an image file.');
-        return;
-      }
-
-      // Limit size roughly (Replicate has limits)
-      if (file.size > 8 * 1024 * 1024) {
-        alert('Image is too large. Please use an image under 8 MB.');
-        return;
-      }
-
+      if (!file.type.startsWith('image/')) { alert('Please select an image file.'); return; }
+      if (file.size > 8 * 1024 * 1024) { alert('Image too large. Use under 8 MB.'); return; }
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = e => {
         originalImageDataUrl = e.target.result;
-        showOriginal(originalImageDataUrl);
+        originalPreview.innerHTML = '';
+        const img = document.createElement('img');
+        img.src = originalImageDataUrl;
+        originalPreview.appendChild(img);
         enhanceBtn.disabled = false;
         resetBtn.disabled = false;
         downloadBtn.disabled = true;
@@ -433,17 +180,67 @@
       reader.readAsDataURL(file);
     }
 
-    function showOriginal(dataUrl) {
-      originalPreview.innerHTML = '';
-      const img = document.createElement('img');
-      img.src = dataUrl;
-      img.alt = 'Original';
-      originalPreview.appendChild(img);
+    async function createPredictionDirect(token, image, scale, faceEnhance) {
+      const res = await fetch('https://api.replicate.com/v1/predictions', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Token ' + token,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          version: REAL_ESRGAN_VERSION,
+          input: { image: image, scale: scale, face_enhance: faceEnhance }
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        const msg = data.detail || data.error || data.title || ('API error ' + res.status);
+        throw new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
+      }
+      return data;
+    }
+
+    async function pollPredictionDirect(token, id) {
+      const res = await fetch('https://api.replicate.com/v1/predictions/' + id, {
+        headers: { 'Authorization': 'Token ' + token }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || data.error || ('Poll error ' + res.status));
+      return data;
+    }
+
+    async function createPredictionNetlify(token, image, scale, faceEnhance) {
+      const res = await fetch('/.netlify/functions/enhance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, image, scale, face_enhance: faceEnhance })
+      });
+      const text = await res.text();
+      let data;
+      try { data = JSON.parse(text); } catch (e) {
+        throw new Error('Netlify function not available (got HTML). Trying direct mode.');
+      }
+      if (!res.ok) throw new Error(data.error || ('API error ' + res.status));
+      return data;
+    }
+
+    async function pollPredictionNetlify(token, id) {
+      const res = await fetch('/.netlify/functions/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, predictionId: id })
+      });
+      const text = await res.text();
+      let data;
+      try { data = JSON.parse(text); } catch (e) {
+        throw new Error('Status proxy returned non-JSON');
+      }
+      if (!res.ok) throw new Error(data.error || ('Poll error ' + res.status));
+      return data;
     }
 
     enhanceBtn.addEventListener('click', async () => {
       if (!originalImageDataUrl || isProcessing) return;
-
       const token = apiTokenInput.value.trim() || localStorage.getItem('replicate_api_token');
       if (!token) {
         alert('Please enter and save your Replicate API token first.');
@@ -452,71 +249,49 @@
 
       isProcessing = true;
       enhanceBtn.disabled = true;
-      statusEl.innerHTML = '<span class="spinner"></span> Starting AI enhancement... this may take 10-40 seconds';
+      statusEl.innerHTML = '<span class="spinner"></span> Starting AI enhancement...';
 
       try {
         const scale = parseInt(scaleSelect.value, 10);
         const faceEnhance = faceEnhanceSelect.value === 'true';
 
-        // Call our Netlify Function (avoids CORS problems with Replicate)
-        const createRes = await fetch('/.netlify/functions/enhance', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            token: token,
-            image: originalImageDataUrl,
-            scale: scale,
-            face_enhance: faceEnhance
-          })
-        });
-
-        const createData = await createRes.json();
-
-        if (!createRes.ok) {
-          throw new Error(createData.error || `API error ${createRes.status}`);
+        let result;
+        if (isNetlify) {
+          try {
+            result = await createPredictionNetlify(token, originalImageDataUrl, scale, faceEnhance);
+          } catch (e) {
+            statusEl.textContent = 'Netlify proxy failed, trying direct Replicate...';
+            result = await createPredictionDirect(token, originalImageDataUrl, scale, faceEnhance);
+          }
+        } else {
+          result = await createPredictionDirect(token, originalImageDataUrl, scale, faceEnhance);
         }
 
-        const predictionId = createData.id;
-        let status = createData.status;
-        let result = createData;
+        let status = result.status;
+        const predictionId = result.id;
 
-        // Poll until finished (also through our proxy)
         while (status !== 'succeeded' && status !== 'failed' && status !== 'canceled') {
-          statusEl.innerHTML = `<span class="spinner"></span> Processing... (${status})`;
-          await new Promise(r => setTimeout(r, 1800));
-
-          const pollRes = await fetch('/.netlify/functions/status', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              token: token,
-              predictionId: predictionId
-            })
-          });
-
-          const pollData = await pollRes.json();
-
-          if (!pollRes.ok) {
-            throw new Error(pollData.error || `Polling failed: ${pollRes.status}`);
+          statusEl.innerHTML = '<span class="spinner"></span> Processing... (' + status + ')';
+          await new Promise(r => setTimeout(r, 2000));
+          if (isNetlify) {
+            try {
+              result = await pollPredictionNetlify(token, predictionId);
+            } catch (e) {
+              result = await pollPredictionDirect(token, predictionId);
+            }
+          } else {
+            result = await pollPredictionDirect(token, predictionId);
           }
-
-          result = pollData;
           status = result.status;
         }
 
         if (status === 'failed') {
-          throw new Error(result.error || 'Enhancement failed on the server');
+          throw new Error(result.error || 'Enhancement failed. Check credits at replicate.com/account/billing');
         }
+        if (status === 'canceled') throw new Error('Prediction was canceled');
 
-        if (status === 'canceled') {
-          throw new Error('Prediction was canceled');
-        }
-
-        // Output is usually a string URL
         const outputUrl = Array.isArray(result.output) ? result.output[0] : result.output;
-        if (!outputUrl) {
-          throw new Error('No output image returned');
-        }
+        if (!outputUrl) throw new Error('No output image returned');
 
         enhancedImageUrl = outputUrl;
         enhancedPreview.innerHTML = '';
@@ -524,13 +299,19 @@
         img.src = outputUrl;
         img.alt = 'Enhanced';
         enhancedPreview.appendChild(img);
-
         downloadBtn.disabled = false;
         statusEl.textContent = 'Enhancement complete.';
       } catch (err) {
         console.error(err);
-        statusEl.textContent = 'Error: ' + (err.message || 'Something went wrong');
-        alert('Error: ' + (err.message || 'Something went wrong. Check your token and try again.'));
+        let msg = err.message || 'Something went wrong';
+        if (msg.includes('Failed to fetch') || msg.includes('CORS') || msg.includes('NetworkError')) {
+          msg = 'Browser blocked the request (CORS). Prefer the Netlify site: https://imagecleanerr.netlify.app — or check token/credits.';
+        }
+        if (msg.includes('insufficient credit') || msg.includes('Payment Required') || msg.includes('402')) {
+          msg = 'No Replicate credits left. Buy a small amount at https://replicate.com/account/billing';
+        }
+        statusEl.textContent = 'Error: ' + msg;
+        alert('Error: ' + msg);
       } finally {
         isProcessing = false;
         enhanceBtn.disabled = false;
